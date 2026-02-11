@@ -1,0 +1,85 @@
+/* assets/css/style.css */
+
+:root {
+    /* Color azul corporativo de TicKeep extraído del logo */
+    --primary-color: #0d47a1; 
+    --primary-hover: #063175;
+    --bg-color: #f0f2f5;
+    --text-color: #333;
+}
+
+body {
+    background-color: var(--bg-color);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+}
+
+.auth-card {
+    background: white;
+    padding: 2.5rem;
+    border-radius: 1rem; /* Bordes redondeados como en Figma */
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+    width: 100%;
+    max-width: 450px;
+}
+
+.brand-title {
+    color: var(--primary-color);
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 1.5rem;
+    font-size: 2rem;
+}
+
+.form-label {
+    font-weight: 500;
+    color: var(--text-color);
+    margin-bottom: 0.5rem;
+}
+
+.form-control {
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    border: 1px solid #ced4da;
+    margin-bottom: 1rem;
+}
+
+.form-control:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.25rem rgba(13, 71, 161, 0.25);
+}
+
+.btn-tickeep {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    width: 100%;
+    transition: background-color 0.3s;
+}
+
+.btn-tickeep:hover {
+    background-color: var(--primary-hover);
+}
+
+.auth-links {
+    text-align: center;
+    margin-top: 1.5rem;
+    font-size: 0.9rem;
+}
+
+.auth-links a {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.auth-links a:hover {
+    text-decoration: underline;
+}
