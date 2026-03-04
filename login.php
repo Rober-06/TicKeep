@@ -19,11 +19,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         // Verificar si existe y si la contraseña coincide
         if ($usuario && password_verify($password, $usuario['password'])) {
-            // ¡LOGIN CORRECTO!
+            // Usuario y contraseña correcto
             $_SESSION['id_usuario'] = $usuario['id_usuario'];
             $_SESSION['nombre'] = $usuario['nombre'];
             
-            // Redirigir al panel principal (Dashboard)
+            // Redirigir al inicio
             header("Location: index.php"); 
             exit();
         } else {
