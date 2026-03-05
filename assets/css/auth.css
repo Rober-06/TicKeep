@@ -1,0 +1,224 @@
+/* --- VARIABLES Y ESTILOS GLOBALES --- */
+:root {
+    --tk-dark: #121212;         /* Para el texto principal */
+    --tk-blue-primary: #1D4ED8; /* Color azul de TicKeep */
+    --tk-blue-light: #EFF6FF;   /* Azul muy pálido para fondos */
+    --tk-gray-muted: #6B7280;   /* Texto secundario */
+    --tk-gray-border: #E5E7EB;  /* Bordes sutiles */
+    --tk-bg-gradient-start: #1D4ED8; /* Degradado de fondo */
+    --tk-bg-gradient-end: #000000;   /* Degradado de fondo */
+}
+
+body {
+    background-color: #F8F9FA;
+    font-family: 'Poppins', sans-serif;
+    color: var(--tk-dark);
+    min-height: 100vh;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+}
+/* --- HEADER --- */
+.tk-header {
+    background-color: var(--tk-blue-primary);
+    padding: 1rem 0;
+    width: 100%;
+}
+
+.tk-logo {
+    color: white;
+    font-weight: 700;
+    font-size: 1.5rem;
+    text-decoration: none;
+}
+
+.avatar-img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid white;
+}
+
+/* --- CONTENEDOR PRINCIPAL --- */
+.tk-content {
+    max-width: 900px;
+    width: 90%;
+    margin: 3rem auto; /* Separación del header */
+    padding: 2rem;
+    background-color: white; /* FONDO BLANCO*/
+    border-radius: 16px; /* Esquinas redondas*/
+    box-shadow: 0px 10px 25px rgba(0, 0, 0, 0.1); /* Sombra suave*/
+}
+
+.title-section {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.title-section h2 {
+    margin: 0;
+    color: var(--tk-blue-primary);
+    font-weight: bold;
+}
+
+/* --- BOTONES --- */
+.tk-btn-primary {
+    background-color: var(--tk-blue-primary);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 0.6rem 1.5rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.tk-btn-export {
+    background-color: #E2E8F0;
+    color: #475569;
+    border-radius: 50px;
+    padding: 0.6rem 1.5rem;
+    border: none;
+    font-weight: 500;
+}
+
+/* --- BUSCADOR --- */
+.search-input-wrapper {
+    position: relative;
+    width: 100%;
+    margin-bottom: 1rem;
+}
+
+.search-input {
+    width: 100%;
+    padding: 0.8rem 1.2rem;
+    padding-left: 3rem; /* Espacio para la lupa */
+    border-radius: 50px;
+    border: 1px solid var(--tk-gray-border);
+    background-color: #f1f5f9;
+}
+
+/* --- FILTROS --- */
+.filter-pills {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 2rem;
+}
+
+.filter-pill {
+    background-color: #E2E8F0;
+    color: #475569;
+    padding: 0.4rem 1.2rem;
+    border-radius: 50px;
+    border: none;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+.filter-pill.active {
+    background-color: var(--tk-blue-primary);
+    color: white;
+}
+
+/* --- TARJETA DE TICKET --- */
+.tk-ticket-card {
+    background-color: white; 
+    border: 1px solid var(--tk-gray-border);
+    border-radius: 12px;
+    padding: 1.2rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+}
+
+.tk-ticket-card:hover {
+    transform: translateY(-3px); /* Efecto sutil cuando hovereas */
+}
+
+.ticket-thumb {
+    width: 100px;
+    height: 100px;
+    border-radius: 8px;
+    object-fit: cover;
+}
+
+.ticket-info {
+    flex-grow: 1;
+}
+
+.ticket-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.ticket-title {
+    margin: 0;
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.store-name {
+    color: var(--tk-blue-primary);
+    font-weight: 500;
+}
+
+.ticket-coments {
+    color: var(--tk-gray-muted);
+    font-size: 0.9rem;
+}
+
+.ticket-expiry {
+    font-size: 0.85rem;
+}
+
+.ticket-expiry b {
+    color: var(--tk-dark);
+}
+
+.tk-btn-details {
+    background-color: #E2E8F0;
+    color: #475569;
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+}
+
+/* --- BADGES DE ESTADO --- */
+.status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.badge-vigente {
+    background-color: #E6FFFA;
+    color: #008767;
+}
+
+.badge-expira-pronto {
+    background-color: #FFF3E0;
+    color: #EF6C00;
+}
+
+.badge-caducada {
+    background-color: #FFEBEE;
+    color: #C62828;
+}
+
+/* --- FOOTER --- */
+.main-footer {
+    background-color: var(--tk-blue-primary);
+    color: white;
+    text-align: center;
+    padding: 2rem;
+    margin-top: auto; /* Mete el footer abajo del to */
+}
