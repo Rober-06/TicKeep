@@ -1,113 +1,98 @@
 <?php
-// registro.php
 require 'config/db.php';
 
 $mensaje = "";
 $tipo_alerta = "";
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $nombre = trim($_POST['nombre']);
-    $email = trim($_POST['email']);
-    $password = $_POST['password'];
-    $confirm_password = $_POST['confirm_password'];
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+  $nombre = trim($_POST['nombre'] ?? '');
+  $email = trim($_POST['email'] ?? '');
+  $password = $_POST['password'] ?? '';
+  $confirm_password = $_POST['confirm_password'] ?? '';
 
-    // Validaciones básicas
-    if (empty($nombre) || empty($email) || empty($password)) {
-        $mensaje = "Por favor, rellena todos los campos.";
-        $tipo_alerta = "danger";
-    } elseif ($password !== $confirm_password) {
-        $mensaje = "Las contraseñas no coinciden.";
-        $tipo_alerta = "danger";
+  if ($nombre === '' || $email === '' || $password === '' || $confirm_password === '') {
+    $mensaje = "Por favor, rellena todos los campos.";
+    $tipo_alerta = "danger";
+  } elseif ($password !== $confirm_password) {
+    $mensaje = "Las contraseñas no coinciden.";
+    $tipo_alerta = "danger";
+  } else {
+    $stmt = $pdo->prepare("SELECT id_usuario FROM usuarios WHERE email = :email");
+    $stmt->execute([':email' => $email]);
+
+    if ($stmt->rowCount() > 0) {
+      $mensaje = "Ese correo ya está registrado.";
+      $tipo_alerta = "warning";
     } else {
-        // Verificar duplicados
-        $stmt = $pdo->prepare("SELECT id_usuario FROM usuarios WHERE email = :email");
-        $stmt->execute([':email' => $email]);
-        
-        if ($stmt->rowCount() > 0) {
-            $mensaje = "Ese correo ya está registrado.";
-            $tipo_alerta = "warning";
-        } else {
-            // Cifrado de contraseña (Seguridad)
-            $password_hash = password_hash($password, PASSWORD_BCRYPT);
+      $password_hash = password_hash($password, PASSWORD_BCRYPT);
 
-            try {
-                $pdo->beginTransaction(); // Iniciamos transacción para asegurar integridad
+      try {
+        $pdo->beginTransaction();
 
-                // 1. Crear Usuario
-                $sql = "INSERT INTO usuarios (nombre, email, password) VALUES (:nombre, :email, :pass)";
-                $stmt = $pdo->prepare($sql);
-                $stmt->execute([':nombre' => $nombre, ':email' => $email, ':pass' => $password_hash]);
-                
-                $id_nuevo_usuario = $pdo->lastInsertId();
+        $sql = "INSERT INTO usuarios (nombre, email, password) VALUES (:nombre, :email, :pass)";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+          ':nombre' => $nombre,
+          ':email' => $email,
+          ':pass' => $password_hash
+        ]);
 
-                // 2. Crear Configuración por defecto (Relación 1:1)
-                $sqlConfig = "INSERT INTO opciones_configuracion (id_usuario) VALUES (:id)";
-                $stmtConfig = $pdo->prepare($sqlConfig);
-                $stmtConfig->execute([':id' => $id_nuevo_usuario]);
+        $id_nuevo_usuario = $pdo->lastInsertId();
 
-                $pdo->commit(); // Guardamos todo
+        $sqlConfig = "INSERT INTO opciones_configuracion (id_usuario) VALUES (:id)";
+        $stmtConfig = $pdo->prepare($sqlConfig);
+        $stmtConfig->execute([':id' => $id_nuevo_usuario]);
 
-                $mensaje = "¡Cuenta creada con éxito! Redirigiendo...";
-                $tipo_alerta = "success";
-                header("refresh:2;url=login.php"); // Redirección automática
+        $pdo->commit();
 
-            } catch (PDOException $e) {
-                $pdo->rollBack(); // Si falla algo, deshacemos cambios
-                $mensaje = "Error en el sistema: " . $e->getMessage();
-                $tipo_alerta = "danger";
-            }
-        }
+        $mensaje = "¡Cuenta creada con éxito! Redirigiendo...";
+        $tipo_alerta = "success";
+        header("refresh:2;url=login.php");
+      } catch (PDOException $e) {
+        $pdo->rollBack();
+        $mensaje = "Error en el sistema.";
+        $tipo_alerta = "danger";
+      }
     }
+  }
 }
+
+$pageTitle = "TicKeep | Registro";
+$activeTab = "register";
+require 'partials/header_auth.php';
+require 'partials/auth_tabs.php';
 ?>
 
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registro - TicKeep</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="assets/css/style.css">
-</head>
-<body>
+<?php if ($mensaje !== ""): ?>
+  <div class="alert alert-<?= htmlspecialchars($tipo_alerta); ?> text-center" role="alert">
+    <?= htmlspecialchars($mensaje); ?>
+  </div>
+<?php endif; ?>
 
-<div class="auth-card">
-    <div class="brand-title">TicKeep</div>
-    <h4 class="text-center mb-4">Crear cuenta</h4>
+<form method="POST" novalidate>
+  <div class="mb-3">
+    <label for="nombre" class="form-label">Nombre</label>
+    <input type="text" class="form-control form-control-lg" id="nombre" name="nombre" value="<?= htmlspecialchars($_POST['nombre'] ?? '') ?>" required />
+  </div>
 
-    <?php if(!empty($mensaje)): ?>
-        <div class="alert alert-<?= $tipo_alerta; ?> text-center"><?= $mensaje; ?></div>
-    <?php endif; ?>
+  <div class="mb-3">
+    <label for="email" class="form-label">Email</label>
+    <input type="email" class="form-control form-control-lg" id="email" name="email" value="<?= htmlspecialchars($_POST['email'] ?? '') ?>" required />
+  </div>
 
-    <form method="POST" action="registro.php">
-        <div class="mb-3">
-            <label for="nombre" class="form-label">Nombre</label>
-            <input type="text" class="form-control" name="nombre" placeholder="Tu nombre completo" required>
-        </div>
-        
-        <div class="mb-3">
-            <label for="email" class="form-label">Email</label>
-            <input type="email" class="form-control" name="email" placeholder="ejemplo@correo.com" required>
-        </div>
-        
-        <div class="mb-3">
-            <label for="password" class="form-label">Contraseña</label>
-            <input type="password" class="form-control" name="password" placeholder="Mínimo 6 caracteres" required>
-        </div>
-        
-        <div class="mb-3">
-            <label for="confirm_password" class="form-label">Confirmar contraseña</label>
-            <input type="password" class="form-control" name="confirm_password" placeholder="Repite tu contraseña" required>
-        </div>
+  <div class="mb-3">
+    <label for="password" class="form-label">Contraseña</label>
+    <input type="password" class="form-control form-control-lg" id="password" name="password" required />
+  </div>
 
-        <button type="submit" class="btn btn-tickeep">Registrarse</button>
-    </form>
+  <div class="mb-4">
+    <label for="confirm_password" class="form-label">Confirmar contraseña</label>
+    <input type="password" class="form-control form-control-lg" id="confirm_password" name="confirm_password" required />
+  </div>
 
-    <div class="auth-links">
-        ¿Ya tienes cuenta? <a href="login.php">Iniciar sesión</a>
-    </div>
-</div>
+  <button type="submit" class="btn btn-primary btn-lg w-100">
+    Crear Cuenta
+  </button>
+</form>
 
-</body>
-</html>
+<?php require 'partials/footer_auth.php'; ?>
