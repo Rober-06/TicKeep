@@ -1,5 +1,5 @@
 <?php
-require 'config/db.php';
+require 'config/bd.php';
 
 $mensaje = "";
 $tipo_alerta = "";
