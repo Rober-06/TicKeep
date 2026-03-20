@@ -18,7 +18,7 @@ if ($id_garantia <= 0) {
 $mensaje = '';
 $tipo_alerta = '';
 
-// Añadir comentario al campo "comentarios"
+// Añadir comentario a la garantía
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['nuevo_comentario'])) {
     $nuevo_comentario = trim($_POST['nuevo_comentario']);
 
@@ -99,7 +99,6 @@ try {
     die("Error al cargar la garantía: " . $e->getMessage());
 }
 
-// Color del estado
 $claseEstado = 'secondary';
 if ($garantia['estado'] === 'Vigente') {
     $claseEstado = 'success';
@@ -109,7 +108,7 @@ if ($garantia['estado'] === 'Vigente') {
     $claseEstado = 'danger';
 }
 
-// Ver si archivo_ticket es imagen
+// Comprobar si el archivo es una imagen
 $mostrarImagen = false;
 if (!empty($garantia['archivo_ticket'])) {
     $extension = strtolower(pathinfo($garantia['archivo_ticket'], PATHINFO_EXTENSION));
@@ -118,175 +117,114 @@ if (!empty($garantia['archivo_ticket'])) {
 ?>
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ver artículo - TicKeep</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        body {
-            background-color: #efefef;
-        }
-
-        .topbar {
-            background: #202bbf;
-            min-height: 70px;
-        }
-
-        .topbar .brand {
-            color: #fff;
-            font-weight: 700;
-            text-decoration: none;
-        }
-
-        .main-card {
-            max-width: 820px;
-            margin: 60px auto;
-            background: #fff;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
-            padding: 24px;
-        }
-
-        .product-image {
-            width: 110px;
-            height: 110px;
-            object-fit: cover;
-            border-radius: 6px;
-            background: #f3f3f3;
-        }
-
-        .comment-box {
-            background: #f7f7f7;
-            border-radius: 6px;
-            padding: 14px;
-            min-height: 90px;
-            white-space: pre-line;
-            font-size: 0.95rem;
-        }
-
-        .btn-soft {
-            font-size: 0.75rem;
-            padding: 6px 12px;
-        }
-
-        footer {
-            background: #202bbf;
-            color: #fff;
-            text-align: center;
-            padding: 18px 10px;
-            margin-top: 80px;
-            font-size: 0.8rem;
-        }
-
-        .back-link {
-            font-size: 0.9rem;
-            text-decoration: none;
-        }
-    </style>
+    <link rel="stylesheet" href="assets/css/detalle.css">
 </head>
+
 <body>
 
-<nav class="topbar d-flex align-items-center">
-    <div class="container d-flex justify-content-between align-items-center">
-        <a href="index.php" class="brand">TicKeep</a>
-        <div class="text-white">
-            <?= htmlspecialchars($_SESSION['nombre'] ?? 'Usuario') ?>
-        </div>
-    </div>
-</nav>
-
-<div class="container">
-    <div class="mx-auto" style="max-width: 820px; margin-top: 40px;">
-        <a href="index.php" class="back-link">← Volver a mis garantías</a>
-    </div>
-
-    <div class="main-card">
-        <?php if ($mensaje !== ''): ?>
-            <div class="alert alert-<?= htmlspecialchars($tipo_alerta) ?> text-center">
-                <?= htmlspecialchars($mensaje) ?>
-            </div>
-        <?php endif; ?>
-
-        <div class="row g-4 align-items-start">
-            <div class="col-md-auto">
-                <?php if ($mostrarImagen): ?>
-                    <img src="<?= htmlspecialchars($garantia['archivo_ticket']) ?>" alt="Ticket o imagen del producto" class="product-image">
-                <?php else: ?>
-                    <div class="product-image d-flex align-items-center justify-content-center">
-                        📦
-                    </div>
-                <?php endif; ?>
-            </div>
-
-            <div class="col">
-                <h3 class="fw-bold mb-2"><?= htmlspecialchars($garantia['nombre_producto']) ?></h3>
-
-                <span class="badge text-bg-<?= $claseEstado ?> mb-3">
-                    <?= htmlspecialchars($garantia['estado']) ?>
-                </span>
-
-                <p class="mb-2">
-                    <strong>Tienda:</strong>
-                    <?= htmlspecialchars($garantia['tienda'] ?: 'No indicada') ?>
-                </p>
-
-                <p class="mb-2">
-                    <strong>Fecha de compra:</strong>
-                    <?= date('d/m/Y', strtotime($garantia['fecha_compra'])) ?>
-                </p>
-
-                <p class="mb-0">
-                    <strong>Fin de garantía:</strong>
-                    <?= date('d/m/Y', strtotime($garantia['fecha_vencimiento'])) ?>
-                </p>
+    <nav class="topbar d-flex align-items-center">
+        <div class="container d-flex justify-content-between align-items-center">
+            <a href="index.php" class="brand">TicKeep</a>
+            <div class="text-white">
+                <?= htmlspecialchars($_SESSION['nombre'] ?? 'Usuario') ?>
             </div>
         </div>
+    </nav>
 
-        <div class="mt-5">
-            <h5 class="fw-bold">Comentarios personales</h5>
-            <p class="text-muted small">
-                Comentarios privados para recordar información relevante sobre esta garantía.
-            </p>
+    <div class="container">
+        <div class="mx-auto" style="max-width: 820px; margin-top: 40px;">
+            <a href="index.php" class="back-link">← Volver a mis garantías</a>
+        </div>
 
-            <div class="comment-box mb-3">
-                <?= htmlspecialchars($garantia['comentarios'] ?: 'Todavía no hay comentarios guardados.') ?>
-            </div>
+        <div class="main-card">
+            <?php if ($mensaje !== ''): ?>
+                <div class="alert alert-<?= htmlspecialchars($tipo_alerta) ?> text-center">
+                    <?= htmlspecialchars($mensaje) ?>
+                </div>
+            <?php endif; ?>
 
-            <form method="POST">
-                <div class="mb-3">
-                    <textarea
-                        name="nuevo_comentario"
-                        class="form-control"
-                        rows="3"
-                        placeholder="Escribe un nuevo comentario..."
-                    ></textarea>
+            <div class="row g-4 align-items-start">
+                <div class="col-md-auto">
+                    <?php if ($mostrarImagen): ?>
+                        <img src="<?= htmlspecialchars($garantia['archivo_ticket']) ?>" alt="Ticket o imagen del producto"
+                            class="product-image">
+                    <?php else: ?>
+                        <div class="product-image d-flex align-items-center justify-content-center">
+                            📦
+                        </div>
+                    <?php endif; ?>
                 </div>
 
-                <button type="submit" class="btn btn-light border btn-soft">
-                    Añadir comentario
-                </button>
-            </form>
-        </div>
+                <div class="col">
+                    <h3 class="fw-bold mb-2"><?= htmlspecialchars($garantia['nombre_producto']) ?></h3>
 
-        <div class="d-flex justify-content-end gap-2 mt-4">
-            <a href="editar_garantia.php?id=<?= (int)$garantia['id_garantia'] ?>" class="btn btn-primary btn-soft">
-                Editar
-            </a>
+                    <span class="badge text-bg-<?= $claseEstado ?> mb-3">
+                        <?= htmlspecialchars($garantia['estado']) ?>
+                    </span>
 
-            <a href="eliminar_garantia.php?id=<?= (int)$garantia['id_garantia'] ?>"
-               class="btn btn-danger btn-soft"
-               onclick="return confirm('¿Seguro que quieres eliminar esta garantía?');">
-                Borrar garantía
-            </a>
+                    <p class="mb-2">
+                        <strong>Tienda:</strong>
+                        <?= htmlspecialchars($garantia['tienda'] ?: 'No indicada') ?>
+                    </p>
+
+                    <p class="mb-2">
+                        <strong>Fecha de compra:</strong>
+                        <?= date('d/m/Y', strtotime($garantia['fecha_compra'])) ?>
+                    </p>
+
+                    <p class="mb-0">
+                        <strong>Fin de garantía:</strong>
+                        <?= date('d/m/Y', strtotime($garantia['fecha_vencimiento'])) ?>
+                    </p>
+                </div>
+            </div>
+
+            <div class="mt-5">
+                <h5 class="fw-bold">Comentarios personales</h5>
+                <p class="text-muted small">
+                    Comentarios privados para recordar información relevante sobre esta garantía.
+                </p>
+
+                <div class="comment-box mb-3">
+                    <?= htmlspecialchars($garantia['comentarios'] ?: 'Todavía no hay comentarios guardados.') ?>
+                </div>
+
+                <form method="POST">
+                    <div class="mb-3">
+                        <textarea name="nuevo_comentario" class="form-control" rows="3"
+                            placeholder="Escribe un nuevo comentario..."></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-light border btn-soft">
+                        Añadir comentario
+                    </button>
+                </form>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2 mt-4">
+                <a href="editar_garantia.php?id=<?= (int) $garantia['id_garantia'] ?>" class="btn btn-primary btn-soft">
+                    Editar
+                </a>
+
+                <a href="eliminar_garantia.php?id=<?= (int) $garantia['id_garantia'] ?>" class="btn btn-danger btn-soft"
+                    onclick="return confirm('¿Seguro que quieres eliminar esta garantía?');">
+                    Borrar garantía
+                </a>
+            </div>
         </div>
     </div>
-</div>
 
-<footer>
-    © 2025 TicKeep. Todos los derechos reservados.<br>
-    Tu tranquilidad, garantizada.
-</footer>
+    <footer>
+        © 2025 TicKeep. Todos los derechos reservados.<br>
+        Tu tranquilidad, garantizada.
+    </footer>
 
 </body>
+
 </html>

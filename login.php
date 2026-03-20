@@ -4,6 +4,7 @@ require 'config/bd.php';
 
 $mensaje = "";
 
+// Comprobar si los datos introducidos están ya registrados
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $email = trim($_POST['email'] ?? '');
     $password = $_POST['password'] ?? '';
@@ -35,7 +36,8 @@ require 'partials/auth_tabs.php';
 <form method="POST" novalidate>
     <div class="mb-3">
         <label for="email" class="form-label">Email</label>
-        <input type="email" class="form-control form-control-lg" id="email" name="email" value="<?= htmlspecialchars($_POST['email'] ?? '') ?>" required />
+        <input type="email" class="form-control form-control-lg" id="email" name="email"
+            value="<?= htmlspecialchars($_POST['email'] ?? '') ?>" required />
     </div>
 
     <div class="mb-4">

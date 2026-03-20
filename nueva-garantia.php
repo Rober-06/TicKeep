@@ -2,7 +2,6 @@
 session_start();
 require 'config/bd.php';
 
-// Comprobar sesión
 if (!isset($_SESSION['id_usuario'])) {
     header('Location: login.php');
     exit();
@@ -36,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $archivo_ticket = null;
 
-    // Validaciones básicas
+    // Validación de campos
     if ($nombre_producto === '' || $fecha_compra === '' || $fecha_vencimiento === '') {
         $mensaje = 'Por favor, rellena los campos obligatorios.';
         $tipo_alerta = 'danger';
@@ -83,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
-        // Insertar si no hubo errores
+        // Insertar nueva garantía si no hay errores
         if ($mensaje === '') {
             $estado = calcularEstado($fecha_vencimiento);
 
@@ -108,7 +107,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $mensaje = 'Garantía añadida correctamente.';
                 $tipo_alerta = 'success';
 
-                // Limpiar formulario
+                // Limpiar formulario al añadir
                 $_POST = [];
             } catch (PDOException $e) {
                 $mensaje = 'Error al guardar la garantía: ' . $e->getMessage();
