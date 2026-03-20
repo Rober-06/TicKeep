@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: 127.0.0.1:3307
--- Tiempo de generación: 11-02-2026 a las 08:46:18
+-- Tiempo de generación: 19-03-2026 a las 14:04:47
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -41,6 +41,10 @@ CREATE TABLE `garantias` (
   `estado` enum('Vigente','Expira pronto','Caducada') DEFAULT 'Vigente'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Volcado de datos para la tabla `garantias`
+--
+
 -- --------------------------------------------------------
 
 --
@@ -69,6 +73,10 @@ CREATE TABLE `usuarios` (
   `email` varchar(150) NOT NULL,
   `fecha_registro` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Volcado de datos para la tabla `usuarios`
+--
 
 --
 -- Índices para tablas volcadas
@@ -102,13 +110,13 @@ ALTER TABLE `usuarios`
 -- AUTO_INCREMENT de la tabla `garantias`
 --
 ALTER TABLE `garantias`
-  MODIFY `id_garantia` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_garantia` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT de la tabla `usuarios`
 --
 ALTER TABLE `usuarios`
-  MODIFY `id_usuario` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id_usuario` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- Restricciones para tablas volcadas

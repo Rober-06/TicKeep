@@ -3,7 +3,7 @@ require 'config/bd.php';
 
 $mensaje = "";
 $tipo_alerta = "";
-
+// Recogida de datos del formulario y validación de esos datos
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
   $nombre = trim($_POST['nombre'] ?? '');
   $email = trim($_POST['email'] ?? '');
@@ -46,6 +46,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $pdo->commit();
 
         $mensaje = "¡Cuenta creada con éxito! Redirigiendo...";
+        //Si todo se ha insertado correctamente, mensaje de éxito y redirección a login
         $tipo_alerta = "success";
         header("refresh:2;url=login.php");
       } catch (PDOException $e) {
@@ -72,12 +73,14 @@ require 'partials/auth_tabs.php';
 <form method="POST" novalidate>
   <div class="mb-3">
     <label for="nombre" class="form-label">Nombre</label>
-    <input type="text" class="form-control form-control-lg" id="nombre" name="nombre" value="<?= htmlspecialchars($_POST['nombre'] ?? '') ?>" required />
+    <input type="text" class="form-control form-control-lg" id="nombre" name="nombre"
+      value="<?= htmlspecialchars($_POST['nombre'] ?? '') ?>" required />
   </div>
 
   <div class="mb-3">
     <label for="email" class="form-label">Email</label>
-    <input type="email" class="form-control form-control-lg" id="email" name="email" value="<?= htmlspecialchars($_POST['email'] ?? '') ?>" required />
+    <input type="email" class="form-control form-control-lg" id="email" name="email"
+      value="<?= htmlspecialchars($_POST['email'] ?? '') ?>" required />
   </div>
 
   <div class="mb-3">
@@ -87,7 +90,8 @@ require 'partials/auth_tabs.php';
 
   <div class="mb-4">
     <label for="confirm_password" class="form-label">Confirmar contraseña</label>
-    <input type="password" class="form-control form-control-lg" id="confirm_password" name="confirm_password" required />
+    <input type="password" class="form-control form-control-lg" id="confirm_password" name="confirm_password"
+      required />
   </div>
 
   <button type="submit" class="btn btn-primary btn-lg w-100">

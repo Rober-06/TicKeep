@@ -9,6 +9,7 @@ if (!isset($_SESSION['id_usuario'])) {
 
 $id_usuario = $_SESSION['id_usuario'];
 
+// Obtener datos del usuario y sus garantías
 try {
     $queryUser = "SELECT u.nombre, c.foto_perfil FROM usuarios u 
                   LEFT JOIN opciones_configuracion c ON u.id_usuario = c.id_usuario 
@@ -30,6 +31,7 @@ $fotoPerfil = !empty($userData['foto_perfil']) ? $userData['foto_perfil'] : 'def
 
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -37,6 +39,7 @@ $fotoPerfil = !empty($userData['foto_perfil']) ? $userData['foto_perfil'] : 'def
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/auth.css">
 </head>
+
 <body>
 
     <header class="tk-header">
@@ -72,26 +75,32 @@ $fotoPerfil = !empty($userData['foto_perfil']) ? $userData['foto_perfil'] : 'def
             <?php if (count($garantias) > 0): ?>
                 <?php foreach ($garantias as $g): ?>
                     <div class="tk-ticket-card bg-white shadow-sm">
-                        <img src="uploads/<?= !empty($g['archivo_ticket']) ? $g['archivo_ticket'] : 'default.png'; ?>" 
-                             class="ticket-thumb" alt="Producto">
-                        
+                        <img src="uploads/<?= !empty($g['archivo_ticket']) ? $g['archivo_ticket'] : 'default.png'; ?>"
+                            class="ticket-thumb" alt="Producto">
+
                         <div class="ticket-info">
                             <div class="ticket-header">
                                 <h3 class="ticket-title"><?= htmlspecialchars($g['nombre_producto']); ?></h3>
-                                <?php 
-                                    $status = $g['estado'] ?? 'Vigente';
-                                    $badge = 'badge-vigente';
-                                    if ($status == 'Expira pronto') $badge = 'badge-expira-pronto';
-                                    if ($status == 'Caducada') $badge = 'badge-caducada';
+                                <?php
+                                $status = $g['estado'] ?? 'Vigente';
+                                $badge = 'badge-vigente';
+                                if ($status == 'Expira pronto')
+                                    $badge = 'badge-expira-pronto';
+                                if ($status == 'Caducada')
+                                    $badge = 'badge-caducada';
                                 ?>
                                 <span class="status-badge <?= $badge ?>"><?= $status ?></span>
                             </div>
-                            <p class="mb-1">Comprado en: <span class="store-name fw-bold"><?= htmlspecialchars($g['tienda']); ?></span></p>
+                            <p class="mb-1">Comprado en: <span
+                                    class="store-name fw-bold"><?= htmlspecialchars($g['tienda']); ?></span></p>
                             <p class="ticket-coments mb-2 text-muted small"><?= htmlspecialchars($g['comentarios']); ?></p>
-                            <p class="ticket-expiry mb-0 small">Vence el: <b><?= date('d/m/Y', strtotime($g['fecha_vencimiento'])); ?></b></p>
+                            <p class="ticket-expiry mb-0 small">Vence el:
+                                <b><?= date('d/m/Y', strtotime($g['fecha_vencimiento'])); ?></b>
+                            </p>
                         </div>
-                        
-                        <a href="detalle.php?id=<?= $g['id_garantia']; ?>" class="tk-btn-details text-decoration-none">Ver detalles</a>
+
+                        <a href="detalle.php?id=<?= $g['id_garantia']; ?>" class="tk-btn-details text-decoration-none">Ver
+                            detalles</a>
                     </div>
                 <?php endforeach; ?>
             <?php else: ?>
@@ -109,4 +118,5 @@ $fotoPerfil = !empty($userData['foto_perfil']) ? $userData['foto_perfil'] : 'def
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+
 </html>
