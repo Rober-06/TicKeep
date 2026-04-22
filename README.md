@@ -11,6 +11,7 @@ La aplicación permite subir imágenes de los tickets, consultar la duración de
 *  HTML
 *  CSS
 *  JavaScript
+*  Bootstrap
 ### Backend
 *  PHP
 ### Base de Datos
