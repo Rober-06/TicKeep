@@ -131,8 +131,16 @@ if (!empty($garantia['archivo_ticket'])) {
     <nav class="topbar d-flex align-items-center">
         <div class="container d-flex justify-content-between align-items-center">
             <a href="index.php" class="brand">TicKeep</a>
-            <div class="text-white">
-                <?= htmlspecialchars($_SESSION['nombre'] ?? 'Usuario') ?>
+            <div class="d-flex align-items-center gap-3">
+                <span class="text-white d-none d-sm-block">
+                    <?= htmlspecialchars($_SESSION['nombre'] ?? 'Usuario') ?>
+                </span>
+                <a href="logout.php" class="tk-btn-logout" title="Cerrar sesión">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                    </svg>
+                    <span class="d-none d-md-inline">Salir</span>
+                </a>
             </div>
         </div>
     </nav>
