@@ -10,7 +10,7 @@ function limpiarJsonGemini(string $texto): string
 
 function procesarTicketGemini(string $rutaImagen): array
 {
-    $apiKey = "TU_API_KEY_AQUI";
+    $apiKey = "AIzaSyDZuST1Q-ujq5dUFXNyvdQT9DMxqknL7gM";
 
     if (!file_exists($rutaImagen)) {
         return [
@@ -27,7 +27,7 @@ function procesarTicketGemini(string $rutaImagen): array
             [
                 "parts" => [
                     [
-                        "text" => "Analiza este ticket de compra y devuelve únicamente un objeto JSON puro con estas claves exactas: nombre_producto, tienda, fecha_compra. La fecha debe ir en formato YYYY-MM-DD. El nombre_producto debe ser el artículo principal o más probable sobre el que un usuario querría guardar una garantía. Si no puedes identificarlo con suficiente seguridad, devuelve cadena vacía. No uses markdown, no uses ```json, no añadas explicaciones."
+                        "text" => "Analiza este ticket de compra y devuelve únicamente un objeto JSON puro con estas claves exactas: nombre_producto, tienda, fecha_compra. La fecha debe ir en formato YYYY-MM-DD. nombre_producto debe ser el artículo principal o el producto más probable sobre el que un usuario querría guardar una garantía, por ejemplo un móvil, auriculares, monitor, electrodoméstico, consola o accesorio tecnológico. Si hay varios productos, devuelve el más relevante. Si no puedes identificar ninguno con una confianza razonable, devuelve cadena vacía. No uses markdown, no uses ```json, no añadas explicaciones."
                     ],
                     [
                         "inline_data" => [
@@ -39,7 +39,7 @@ function procesarTicketGemini(string $rutaImagen): array
             ]
         ],
         "generationConfig" => [
-            "temperature" => 0.2,
+            "temperature" => 0.1,
             "maxOutputTokens" => 800
         ]
     ];

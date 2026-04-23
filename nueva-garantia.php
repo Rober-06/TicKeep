@@ -112,8 +112,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $fecha_compra = $ia['fecha_compra'];
                 }
 
-                $mensaje = 'Ticket escaneado correctamente. Revisa los datos antes de guardar.';
-                $tipo_alerta = 'success';
+                if ($nombre_producto === '') {
+                    $mensaje = 'Ticket escaneado. Se han rellenado los datos detectados, pero el nombre del producto no se ha podido identificar con claridad.';
+                    $tipo_alerta = 'warning';
+                } else {
+                    $mensaje = 'Ticket escaneado correctamente. Revisa los datos antes de guardar.';
+                    $tipo_alerta = 'success';
+                }
             } else {
                 $mensaje = $ia['error'] ?? 'No se pudo interpretar el ticket con IA.';
                 $tipo_alerta = 'warning';
@@ -320,8 +325,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
 
             <div class="mb-3">
-                <button type="submit" name="accion" value="escanear_ticket" class="btn btn-secondary w-100">
-                    Escanear ticket con IA
+                <button type="submit" name="accion" value="escanear_ticket" class="btn btn-secondary w-100" formnovalidate>
+                    Escanear ticket
                 </button>
             </div>
 
