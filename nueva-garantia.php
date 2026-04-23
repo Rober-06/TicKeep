@@ -1,6 +1,7 @@
 <?php
 session_start();
 require 'config/bd.php';
+require 'gemini_ticket.php';
 
 if (!isset($_SESSION['id_usuario'])) {
     header('Location: login.php');
@@ -10,7 +11,15 @@ if (!isset($_SESSION['id_usuario'])) {
 $mensaje = '';
 $tipo_alerta = '';
 
-// Función para calcular el estado automáticamente
+$nombre_producto = trim($_POST['nombre_producto'] ?? '');
+$tienda = trim($_POST['tienda'] ?? '');
+$fecha_compra = trim($_POST['fecha_compra'] ?? '');
+$fecha_vencimiento = trim($_POST['fecha_vencimiento'] ?? '');
+$comentarios = trim($_POST['comentarios'] ?? '');
+
+$archivo_ticket = trim($_POST['archivo_ticket_actual'] ?? '');
+$foto_producto = trim($_POST['foto_producto_actual'] ?? '');
+
 function calcularEstado($fechaVencimiento) {
     $hoy = new DateTime();
     $vencimiento = new DateTime($fechaVencimiento);
@@ -26,71 +35,107 @@ function calcularEstado($fechaVencimiento) {
     }
 }
 
+function guardarArchivoSubido(string $nombreInput, string $directorio, array $permitidas)
+{
+    if (!isset($_FILES[$nombreInput]) || $_FILES[$nombreInput]['error'] === UPLOAD_ERR_NO_FILE) {
+        return null;
+    }
+
+    if ($_FILES[$nombreInput]['error'] !== UPLOAD_ERR_OK) {
+        return false;
+    }
+
+    if (!is_dir($directorio)) {
+        mkdir($directorio, 0777, true);
+    }
+
+    $nombre_original = $_FILES[$nombreInput]['name'];
+    $tmp_name = $_FILES[$nombreInput]['tmp_name'];
+    $tamano = $_FILES[$nombreInput]['size'];
+
+    $extension = strtolower(pathinfo($nombre_original, PATHINFO_EXTENSION));
+
+    if (!in_array($extension, $permitidas, true)) {
+        return false;
+    }
+
+    if ($tamano > 5 * 1024 * 1024) {
+        return false;
+    }
+
+    $nuevo_nombre = uniqid($nombreInput . '_', true) . '.' . $extension;
+    $ruta_final = $directorio . $nuevo_nombre;
+
+    if (!move_uploaded_file($tmp_name, $ruta_final)) {
+        return false;
+    }
+
+    return $ruta_final;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $nombre_producto = trim($_POST['nombre_producto'] ?? '');
-    $tienda = trim($_POST['tienda'] ?? '');
-    $fecha_compra = trim($_POST['fecha_compra'] ?? '');
-    $fecha_vencimiento = trim($_POST['fecha_vencimiento'] ?? '');
-    $comentarios = trim($_POST['comentarios'] ?? '');
+    $accion = $_POST['accion'] ?? '';
 
-    $archivo_ticket = null;
-
-    // Validación de campos
-    if ($nombre_producto === '' || $fecha_compra === '' || $fecha_vencimiento === '') {
-        $mensaje = 'Por favor, rellena los campos obligatorios.';
+    $ticketSubido = guardarArchivoSubido('archivo_ticket', 'uploads/tickets/', ['jpg', 'jpeg', 'png', 'webp', 'pdf']);
+    if ($ticketSubido === false) {
+        $mensaje = 'Error al subir el ticket. Solo se permiten JPG, JPEG, PNG, WEBP o PDF de hasta 5 MB.';
         $tipo_alerta = 'danger';
-    } elseif ($fecha_vencimiento < $fecha_compra) {
-        $mensaje = 'La fecha de vencimiento no puede ser anterior a la fecha de compra.';
-        $tipo_alerta = 'danger';
-    } else {
-        // Procesar ticket si se ha subido
-        if (isset($_FILES['archivo_ticket']) && $_FILES['archivo_ticket']['error'] !== UPLOAD_ERR_NO_FILE) {
-            if ($_FILES['archivo_ticket']['error'] === UPLOAD_ERR_OK) {
-                $directorio = 'uploads/tickets/';
+    } elseif ($ticketSubido !== null) {
+        $archivo_ticket = $ticketSubido;
+    }
 
-                if (!is_dir($directorio)) {
-                    mkdir($directorio, 0777, true);
+    $fotoSubida = guardarArchivoSubido('foto_producto', 'uploads/productos/', ['jpg', 'jpeg', 'png', 'webp']);
+    if ($fotoSubida === false && $mensaje === '') {
+        $mensaje = 'Error al subir la foto del producto. Solo se permiten JPG, JPEG, PNG o WEBP de hasta 5 MB.';
+        $tipo_alerta = 'danger';
+    } elseif ($fotoSubida !== null) {
+        $foto_producto = $fotoSubida;
+    }
+
+    if ($accion === 'escanear_ticket' && $mensaje === '') {
+        if ($archivo_ticket === '') {
+            $mensaje = 'Debes subir un ticket para escanearlo.';
+            $tipo_alerta = 'warning';
+        } else {
+            $ia = procesarTicketGemini($archivo_ticket);
+
+            if ($ia['ok']) {
+                if ($ia['nombre_producto'] !== '') {
+                    $nombre_producto = $ia['nombre_producto'];
                 }
 
-                $nombre_original = $_FILES['archivo_ticket']['name'];
-                $tmp_name = $_FILES['archivo_ticket']['tmp_name'];
-                $tamano = $_FILES['archivo_ticket']['size'];
-
-                $extension = strtolower(pathinfo($nombre_original, PATHINFO_EXTENSION));
-                $permitidas = ['jpg', 'jpeg', 'png', 'webp', 'pdf'];
-
-                if (!in_array($extension, $permitidas, true)) {
-                    $mensaje = 'Formato no permitido. Solo se aceptan JPG, PNG, WEBP o PDF.';
-                    $tipo_alerta = 'danger';
-                } elseif ($tamano > 5 * 1024 * 1024) {
-                    $mensaje = 'El archivo supera el máximo permitido de 5 MB.';
-                    $tipo_alerta = 'danger';
-                } else {
-                    $nuevo_nombre = 'ticket_' . time() . '_' . bin2hex(random_bytes(4)) . '.' . $extension;
-                    $ruta_final = $directorio . $nuevo_nombre;
-
-                    if (move_uploaded_file($tmp_name, $ruta_final)) {
-                        $archivo_ticket = $ruta_final;
-                    } else {
-                        $mensaje = 'No se pudo guardar el archivo del ticket.';
-                        $tipo_alerta = 'danger';
-                    }
+                if ($ia['tienda'] !== '') {
+                    $tienda = $ia['tienda'];
                 }
+
+                if ($ia['fecha_compra'] !== '') {
+                    $fecha_compra = $ia['fecha_compra'];
+                }
+
+                $mensaje = 'Ticket escaneado correctamente. Revisa los datos antes de guardar.';
+                $tipo_alerta = 'success';
             } else {
-                $mensaje = 'Se produjo un error al subir el archivo.';
-                $tipo_alerta = 'danger';
+                $mensaje = $ia['error'] ?? 'No se pudo interpretar el ticket con IA.';
+                $tipo_alerta = 'warning';
             }
         }
+    }
 
-        // Insertar nueva garantía si no hay errores
-        if ($mensaje === '') {
+    if ($accion === 'guardar_garantia' && $mensaje === '') {
+        if ($nombre_producto === '' || $fecha_compra === '' || $fecha_vencimiento === '') {
+            $mensaje = 'Por favor, rellena nombre del producto, fecha de compra y fecha de vencimiento.';
+            $tipo_alerta = 'danger';
+        } elseif ($fecha_vencimiento < $fecha_compra) {
+            $mensaje = 'La fecha de vencimiento no puede ser anterior a la fecha de compra.';
+            $tipo_alerta = 'danger';
+        } else {
             $estado = calcularEstado($fecha_vencimiento);
 
             try {
                 $sql = "INSERT INTO garantias 
-                        (id_usuario, nombre_producto, tienda, fecha_compra, fecha_vencimiento, archivo_ticket, comentarios, estado)
+                        (id_usuario, nombre_producto, tienda, fecha_compra, fecha_vencimiento, archivo_ticket, foto_producto, comentarios, estado)
                         VALUES
-                        (:id_usuario, :nombre_producto, :tienda, :fecha_compra, :fecha_vencimiento, :archivo_ticket, :comentarios, :estado)";
+                        (:id_usuario, :nombre_producto, :tienda, :fecha_compra, :fecha_vencimiento, :archivo_ticket, :foto_producto, :comentarios, :estado)";
 
                 $stmt = $pdo->prepare($sql);
                 $stmt->execute([
@@ -99,16 +144,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ':tienda' => $tienda !== '' ? $tienda : null,
                     ':fecha_compra' => $fecha_compra,
                     ':fecha_vencimiento' => $fecha_vencimiento,
-                    ':archivo_ticket' => $archivo_ticket,
+                    ':archivo_ticket' => $archivo_ticket !== '' ? $archivo_ticket : null,
+                    ':foto_producto' => $foto_producto !== '' ? $foto_producto : null,
                     ':comentarios' => $comentarios !== '' ? $comentarios : null,
                     ':estado' => $estado
                 ]);
 
-                $mensaje = 'Garantía añadida correctamente.';
-                $tipo_alerta = 'success';
-
-                // Limpiar formulario al añadir
-                $_POST = [];
+                header('Location: index.php');
+                exit();
             } catch (PDOException $e) {
                 $mensaje = 'Error al guardar la garantía: ' . $e->getMessage();
                 $tipo_alerta = 'danger';
@@ -179,6 +222,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             margin-top: 80px;
             font-size: 0.8rem;
         }
+
+        .preview-text {
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 6px;
+        }
     </style>
 </head>
 <body>
@@ -204,6 +253,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php endif; ?>
 
         <form method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="archivo_ticket_actual" value="<?= htmlspecialchars($archivo_ticket) ?>">
+            <input type="hidden" name="foto_producto_actual" value="<?= htmlspecialchars($foto_producto) ?>">
+
             <div class="mb-3">
                 <label for="nombre_producto" class="form-label">Nombre del producto *</label>
                 <input
@@ -211,7 +263,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     class="form-control"
                     id="nombre_producto"
                     name="nombre_producto"
-                    value="<?= htmlspecialchars($_POST['nombre_producto'] ?? '') ?>"
+                    value="<?= htmlspecialchars($nombre_producto) ?>"
                     required
                 >
             </div>
@@ -223,7 +275,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     class="form-control"
                     id="tienda"
                     name="tienda"
-                    value="<?= htmlspecialchars($_POST['tienda'] ?? '') ?>"
+                    value="<?= htmlspecialchars($tienda) ?>"
                 >
             </div>
 
@@ -235,7 +287,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         class="form-control"
                         id="fecha_compra"
                         name="fecha_compra"
-                        value="<?= htmlspecialchars($_POST['fecha_compra'] ?? '') ?>"
+                        value="<?= htmlspecialchars($fecha_compra) ?>"
                         required
                     >
                 </div>
@@ -247,7 +299,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         class="form-control"
                         id="fecha_vencimiento"
                         name="fecha_vencimiento"
-                        value="<?= htmlspecialchars($_POST['fecha_vencimiento'] ?? '') ?>"
+                        value="<?= htmlspecialchars($fecha_vencimiento) ?>"
                         required
                     >
                 </div>
@@ -262,6 +314,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     name="archivo_ticket"
                     accept=".jpg,.jpeg,.png,.webp,.pdf"
                 >
+                <?php if ($archivo_ticket !== ''): ?>
+                    <div class="preview-text">Ticket actual: <?= htmlspecialchars(basename($archivo_ticket)) ?></div>
+                <?php endif; ?>
+            </div>
+
+            <div class="mb-3">
+                <button type="submit" name="accion" value="escanear_ticket" class="btn btn-secondary w-100">
+                    Escanear ticket con IA
+                </button>
+            </div>
+
+            <div class="mb-3">
+                <label for="foto_producto" class="form-label">Seleccionar foto del producto</label>
+                <input
+                    type="file"
+                    class="form-control"
+                    id="foto_producto"
+                    name="foto_producto"
+                    accept=".jpg,.jpeg,.png,.webp"
+                >
+                <?php if ($foto_producto !== ''): ?>
+                    <div class="preview-text">Foto actual: <?= htmlspecialchars(basename($foto_producto)) ?></div>
+                <?php endif; ?>
             </div>
 
             <div class="mb-4">
@@ -271,10 +346,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     id="comentarios"
                     name="comentarios"
                     rows="4"
-                ><?= htmlspecialchars($_POST['comentarios'] ?? '') ?></textarea>
+                ><?= htmlspecialchars($comentarios) ?></textarea>
             </div>
 
-            <button type="submit" class="btn btn-save text-white w-100">Añadir producto</button>
+            <button type="submit" name="accion" value="guardar_garantia" class="btn btn-save text-white w-100">
+                Añadir producto
+            </button>
         </form>
     </div>
 </div>

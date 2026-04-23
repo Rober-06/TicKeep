@@ -33,6 +33,7 @@ foreach ($garantias as $g) {
     $color = '#16a34a';
     if ($estado === 'Expira pronto') $color = '#d97706';
     if ($estado === 'Caducada')     $color = '#dc2626';
+
     $garantiasCalendario[] = [
         'title'         => $g['nombre_producto'],
         'start'         => $g['fecha_vencimiento'],
@@ -141,12 +142,19 @@ $garantiasJson = json_encode($garantiasCalendario, JSON_UNESCAPED_UNICODE);
                             $badge  = 'badge-vigente';
                             if ($status === 'Expira pronto') $badge = 'badge-expira-pronto';
                             if ($status === 'Caducada')      $badge = 'badge-caducada';
+
+                            $imagenMostrar = 'uploads/default.png';
+                            if (!empty($g['foto_producto'])) {
+                                $imagenMostrar = $g['foto_producto'];
+                            } elseif (!empty($g['archivo_ticket'])) {
+                                $imagenMostrar = $g['archivo_ticket'];
+                            }
                             ?>
                             <div class="tk-ticket-card"
                                  data-estado="<?= htmlspecialchars($status) ?>"
                                  data-nombre="<?= strtolower(htmlspecialchars($g['nombre_producto'])) ?>"
                                  data-tienda="<?= strtolower(htmlspecialchars($g['tienda'])) ?>">
-                                <img src="uploads/<?= !empty($g['archivo_ticket']) ? htmlspecialchars($g['archivo_ticket']) : 'default.png'; ?>" class="ticket-thumb" alt="Producto">
+                                <img src="<?= htmlspecialchars($imagenMostrar) ?>" class="ticket-thumb" alt="Producto">
                                 <div class="ticket-info">
                                     <div class="ticket-header">
                                         <h3 class="ticket-title"><?= htmlspecialchars($g['nombre_producto']); ?></h3>
@@ -236,7 +244,7 @@ $garantiasJson = json_encode($garantiasCalendario, JSON_UNESCAPED_UNICODE);
                 if (info.event.url) window.location.href = info.event.url;
             },
             eventDidMount(info) {
-                info.el.title = info.event.title + ' — ' + (info.event.extendedProps.tienda||'') + ' (' + (info.event.extendedProps.estado||'') + ')';
+                info.el.title = info.event.title + ' — ' + (info.event.extendedProps.tienda || '') + ' (' + (info.event.extendedProps.estado || '') + ')';
             }
         });
         cal.render();
