@@ -1,7 +1,6 @@
 <?php
 session_start();
 require 'config/bd.php';
-require 'ocr_ticket.php';
 
 if (!isset($_SESSION['id_usuario'])) {
     header('Location: login.php');
@@ -10,18 +9,12 @@ if (!isset($_SESSION['id_usuario'])) {
 
 $mensaje = '';
 $tipo_alerta = '';
-$debug_ocr = '';
 
-$nombre_producto = trim($_POST['nombre_producto'] ?? '');
-$tienda = trim($_POST['tienda'] ?? '');
-$fecha_compra = trim($_POST['fecha_compra'] ?? '');
-$fecha_vencimiento = trim($_POST['fecha_vencimiento'] ?? '');
-$comentarios = trim($_POST['comentarios'] ?? '');
-
-function calcularEstado($fechaVencimiento)
-{
+// Función para calcular el estado automáticamente
+function calcularEstado($fechaVencimiento) {
     $hoy = new DateTime();
     $vencimiento = new DateTime($fechaVencimiento);
+
     $diferencia = (int)$hoy->diff($vencimiento)->format('%r%a');
 
     if ($diferencia < 0) {
@@ -34,12 +27,23 @@ function calcularEstado($fechaVencimiento)
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $nombre_producto = trim($_POST['nombre_producto'] ?? '');
+    $tienda = trim($_POST['tienda'] ?? '');
+    $fecha_compra = trim($_POST['fecha_compra'] ?? '');
+    $fecha_vencimiento = trim($_POST['fecha_vencimiento'] ?? '');
+    $comentarios = trim($_POST['comentarios'] ?? '');
+
     $archivo_ticket = null;
 
-    if ($fecha_vencimiento === '') {
+    // Validación de campos
+    if ($nombre_producto === '' || $fecha_compra === '' || $fecha_vencimiento === '') {
         $mensaje = 'Por favor, rellena los campos obligatorios.';
         $tipo_alerta = 'danger';
+    } elseif ($fecha_vencimiento < $fecha_compra) {
+        $mensaje = 'La fecha de vencimiento no puede ser anterior a la fecha de compra.';
+        $tipo_alerta = 'danger';
     } else {
+        // Procesar ticket si se ha subido
         if (isset($_FILES['archivo_ticket']) && $_FILES['archivo_ticket']['error'] !== UPLOAD_ERR_NO_FILE) {
             if ($_FILES['archivo_ticket']['error'] === UPLOAD_ERR_OK) {
                 $directorio = 'uploads/tickets/';
@@ -53,10 +57,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $tamano = $_FILES['archivo_ticket']['size'];
 
                 $extension = strtolower(pathinfo($nombre_original, PATHINFO_EXTENSION));
-                $permitidas = ['jpg', 'jpeg', 'png', 'webp'];
+                $permitidas = ['jpg', 'jpeg', 'png', 'webp', 'pdf'];
 
                 if (!in_array($extension, $permitidas, true)) {
-                    $mensaje = 'Formato no permitido. Solo JPG, JPEG, PNG o WEBP.';
+                    $mensaje = 'Formato no permitido. Solo se aceptan JPG, PNG, WEBP o PDF.';
                     $tipo_alerta = 'danger';
                 } elseif ($tamano > 5 * 1024 * 1024) {
                     $mensaje = 'El archivo supera el máximo permitido de 5 MB.';
@@ -67,42 +71,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     if (move_uploaded_file($tmp_name, $ruta_final)) {
                         $archivo_ticket = $ruta_final;
-
-                        $ocr = procesarOCRTicket($ruta_final);
-
-                        if ($ocr['ok']) {
-                            $debug_ocr = $ocr['texto'];
-
-                            if ($nombre_producto === '' && !empty($ocr['producto'])) {
-                                $nombre_producto = $ocr['producto'];
-                            }
-
-                            if ($tienda === '' && !empty($ocr['tienda'])) {
-                                $tienda = $ocr['tienda'];
-                            }
-
-                            if ($fecha_compra === '' && !empty($ocr['fecha_compra'])) {
-                                $fecha_compra = $ocr['fecha_compra'];
-                            }
-
-                            if ($comentarios === '' && !empty($ocr['resumen'])) {
-                                $comentarios = $ocr['resumen'];
-                            }
-
-                            $mensaje = 'Ticket leído correctamente con OCR.';
-                            $tipo_alerta = 'success';
-                        } else {
-                            $mensaje = $ocr['error'] ?? 'Error desconocido en OCR.';
-                            $tipo_alerta = 'warning';
-
-                            if (!empty($ocr['debug'])) {
-                                $debug_ocr .= "SALIDA TESSERACT:\n" . $ocr['debug'] . "\n\n";
-                            }
-
-                            if (!empty($ocr['cmd'])) {
-                                $debug_ocr .= "COMANDO:\n" . $ocr['cmd'];
-                            }
-                        }
                     } else {
                         $mensaje = 'No se pudo guardar el archivo del ticket.';
                         $tipo_alerta = 'danger';
@@ -114,26 +82,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
-        if ($nombre_producto === '' && $tipo_alerta !== 'danger') {
-            $mensaje = 'No se ha podido detectar el nombre del producto automáticamente. Revísalo manualmente.';
-            $tipo_alerta = 'warning';
-        }
-
-        if ($fecha_compra === '' && $tipo_alerta !== 'danger') {
-            $mensaje = 'No se ha podido detectar la fecha de compra automáticamente. Revísala manualmente.';
-            $tipo_alerta = 'warning';
-        }
-
-        if ($nombre_producto !== '' && $fecha_compra !== '' && $fecha_vencimiento !== '' && $fecha_vencimiento < $fecha_compra) {
-            $mensaje = 'La fecha de vencimiento no puede ser anterior a la fecha de compra.';
-            $tipo_alerta = 'danger';
-        }
-
-        if ($tipo_alerta !== 'danger' && $nombre_producto !== '' && $fecha_compra !== '') {
+        // Insertar nueva garantía si no hay errores
+        if ($mensaje === '') {
             $estado = calcularEstado($fecha_vencimiento);
 
             try {
-                $sql = "INSERT INTO garantias
+                $sql = "INSERT INTO garantias 
                         (id_usuario, nombre_producto, tienda, fecha_compra, fecha_vencimiento, archivo_ticket, comentarios, estado)
                         VALUES
                         (:id_usuario, :nombre_producto, :tienda, :fecha_compra, :fecha_vencimiento, :archivo_ticket, :comentarios, :estado)";
@@ -150,8 +104,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     ':estado' => $estado
                 ]);
 
-                header('Location: index.php');
-                exit();
+                $mensaje = 'Garantía añadida correctamente.';
+                $tipo_alerta = 'success';
+
+                // Limpiar formulario al añadir
+                $_POST = [];
             } catch (PDOException $e) {
                 $mensaje = 'Error al guardar la garantía: ' . $e->getMessage();
                 $tipo_alerta = 'danger';
@@ -168,7 +125,61 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nueva garantía - TicKeep</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="assets/css/nueva-garantia.css">
+    <style>
+        body {
+            background-color: #efefef;
+        }
+
+        .topbar {
+            background: #202bbf;
+            min-height: 70px;
+        }
+
+        .topbar .brand {
+            color: #fff;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .main-card {
+            max-width: 820px;
+            margin: 60px auto;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+            padding: 45px 35px;
+        }
+
+        .icon-box {
+            font-size: 2rem;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .title-box {
+            text-align: center;
+            font-weight: 700;
+            margin-bottom: 35px;
+        }
+
+        .btn-save {
+            background: #0d7fc0;
+            border: none;
+        }
+
+        .btn-save:hover {
+            background: #0b6da4;
+        }
+
+        footer {
+            background: #202bbf;
+            color: #fff;
+            text-align: center;
+            padding: 18px 10px;
+            margin-top: 80px;
+            font-size: 0.8rem;
+        }
+    </style>
 </head>
 <body>
 
@@ -195,50 +206,76 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <form method="POST" enctype="multipart/form-data">
             <div class="mb-3">
                 <label for="nombre_producto" class="form-label">Nombre del producto *</label>
-                <input type="text" class="form-control" id="nombre_producto" name="nombre_producto"
-                    value="<?= htmlspecialchars($nombre_producto) ?>" required>
+                <input
+                    type="text"
+                    class="form-control"
+                    id="nombre_producto"
+                    name="nombre_producto"
+                    value="<?= htmlspecialchars($_POST['nombre_producto'] ?? '') ?>"
+                    required
+                >
             </div>
 
             <div class="mb-3">
                 <label for="tienda" class="form-label">Tienda</label>
-                <input type="text" class="form-control" id="tienda" name="tienda"
-                    value="<?= htmlspecialchars($tienda) ?>">
+                <input
+                    type="text"
+                    class="form-control"
+                    id="tienda"
+                    name="tienda"
+                    value="<?= htmlspecialchars($_POST['tienda'] ?? '') ?>"
+                >
             </div>
 
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label for="fecha_compra" class="form-label">Fecha de compra *</label>
-                    <input type="date" class="form-control" id="fecha_compra" name="fecha_compra"
-                        value="<?= htmlspecialchars($fecha_compra) ?>">
+                    <input
+                        type="date"
+                        class="form-control"
+                        id="fecha_compra"
+                        name="fecha_compra"
+                        value="<?= htmlspecialchars($_POST['fecha_compra'] ?? '') ?>"
+                        required
+                    >
                 </div>
 
                 <div class="col-md-6 mb-3">
                     <label for="fecha_vencimiento" class="form-label">Fecha de vencimiento *</label>
-                    <input type="date" class="form-control" id="fecha_vencimiento" name="fecha_vencimiento"
-                        value="<?= htmlspecialchars($fecha_vencimiento) ?>" required>
+                    <input
+                        type="date"
+                        class="form-control"
+                        id="fecha_vencimiento"
+                        name="fecha_vencimiento"
+                        value="<?= htmlspecialchars($_POST['fecha_vencimiento'] ?? '') ?>"
+                        required
+                    >
                 </div>
             </div>
 
             <div class="mb-3">
                 <label for="archivo_ticket" class="form-label">Subir ticket</label>
-                <input type="file" class="form-control" id="archivo_ticket" name="archivo_ticket"
-                    accept=".jpg,.jpeg,.png,.webp">
+                <input
+                    type="file"
+                    class="form-control"
+                    id="archivo_ticket"
+                    name="archivo_ticket"
+                    accept=".jpg,.jpeg,.png,.webp,.pdf"
+                >
             </div>
 
             <div class="mb-4">
                 <label for="comentarios" class="form-label">Comentarios</label>
-                <textarea class="form-control" id="comentarios" name="comentarios"
-                    rows="4"><?= htmlspecialchars($comentarios) ?></textarea>
+                <textarea
+                    class="form-control"
+                    id="comentarios"
+                    name="comentarios"
+                    rows="4"
+                ><?= htmlspecialchars($_POST['comentarios'] ?? '') ?></textarea>
             </div>
 
             <button type="submit" class="btn btn-save text-white w-100">Añadir producto</button>
         </form>
-
-        <?php if ($debug_ocr !== ''): ?>
-            <hr>
-            <h5 class="mt-4">Resultado OCR / Debug</h5>
-            <pre style="white-space: pre-wrap; background:#f8f9fa; padding:15px; border-radius:8px;"><?= htmlspecialchars($debug_ocr) ?></pre>
-        <?php endif; ?>
     </div>
 </div>
 
