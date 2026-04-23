@@ -10,6 +10,7 @@ if (!isset($_SESSION['id_usuario'])) {
 
 $mensaje = '';
 $tipo_alerta = '';
+$debug_ocr = '';
 
 $nombre_producto = trim($_POST['nombre_producto'] ?? '');
 $tienda = trim($_POST['tienda'] ?? '');
@@ -21,7 +22,6 @@ function calcularEstado($fechaVencimiento)
 {
     $hoy = new DateTime();
     $vencimiento = new DateTime($fechaVencimiento);
-
     $diferencia = (int)$hoy->diff($vencimiento)->format('%r%a');
 
     if ($diferencia < 0) {
@@ -36,7 +36,7 @@ function calcularEstado($fechaVencimiento)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $archivo_ticket = null;
 
-    if ($nombre_producto === '' || $fecha_vencimiento === '') {
+    if ($fecha_vencimiento === '') {
         $mensaje = 'Por favor, rellena los campos obligatorios.';
         $tipo_alerta = 'danger';
     } else {
@@ -56,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $permitidas = ['jpg', 'jpeg', 'png', 'webp'];
 
                 if (!in_array($extension, $permitidas, true)) {
-                    $mensaje = 'Formato no permitido. Solo se aceptan JPG, JPEG, PNG o WEBP.';
+                    $mensaje = 'Formato no permitido. Solo JPG, JPEG, PNG o WEBP.';
                     $tipo_alerta = 'danger';
                 } elseif ($tamano > 5 * 1024 * 1024) {
                     $mensaje = 'El archivo supera el máximo permitido de 5 MB.';
@@ -71,6 +71,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $ocr = procesarOCRTicket($ruta_final);
 
                         if ($ocr['ok']) {
+                            $debug_ocr = $ocr['texto'];
+
+                            if ($nombre_producto === '' && !empty($ocr['producto'])) {
+                                $nombre_producto = $ocr['producto'];
+                            }
+
                             if ($tienda === '' && !empty($ocr['tienda'])) {
                                 $tienda = $ocr['tienda'];
                             }
@@ -79,12 +85,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 $fecha_compra = $ocr['fecha_compra'];
                             }
 
-                            if ($comentarios === '' && !empty($ocr['texto'])) {
-                                $comentarios = $ocr['texto'];
+                            if ($comentarios === '' && !empty($ocr['resumen'])) {
+                                $comentarios = $ocr['resumen'];
                             }
+
+                            $mensaje = 'Ticket leído correctamente con OCR.';
+                            $tipo_alerta = 'success';
                         } else {
-                            $mensaje = 'Se ha subido el ticket, pero el OCR no ha podido leerlo.';
+                            $mensaje = $ocr['error'] ?? 'Error desconocido en OCR.';
                             $tipo_alerta = 'warning';
+
+                            if (!empty($ocr['debug'])) {
+                                $debug_ocr .= "SALIDA TESSERACT:\n" . $ocr['debug'] . "\n\n";
+                            }
+
+                            if (!empty($ocr['cmd'])) {
+                                $debug_ocr .= "COMANDO:\n" . $ocr['cmd'];
+                            }
                         }
                     } else {
                         $mensaje = 'No se pudo guardar el archivo del ticket.';
@@ -97,17 +114,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
+        if ($nombre_producto === '' && $tipo_alerta !== 'danger') {
+            $mensaje = 'No se ha podido detectar el nombre del producto automáticamente. Revísalo manualmente.';
+            $tipo_alerta = 'warning';
+        }
+
         if ($fecha_compra === '' && $tipo_alerta !== 'danger') {
             $mensaje = 'No se ha podido detectar la fecha de compra automáticamente. Revísala manualmente.';
             $tipo_alerta = 'warning';
         }
 
-        if ($fecha_compra !== '' && $fecha_vencimiento !== '' && $fecha_vencimiento < $fecha_compra) {
+        if ($nombre_producto !== '' && $fecha_compra !== '' && $fecha_vencimiento !== '' && $fecha_vencimiento < $fecha_compra) {
             $mensaje = 'La fecha de vencimiento no puede ser anterior a la fecha de compra.';
             $tipo_alerta = 'danger';
         }
 
-        if ($tipo_alerta !== 'danger') {
+        if ($tipo_alerta !== 'danger' && $nombre_producto !== '' && $fecha_compra !== '') {
             $estado = calcularEstado($fecha_vencimiento);
 
             try {
@@ -141,7 +163,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -149,78 +170,82 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/nueva-garantia.css">
 </head>
-
 <body>
 
-    <nav class="topbar d-flex align-items-center">
-        <div class="container d-flex justify-content-between align-items-center">
-            <a href="index.php" class="brand">TicKeep</a>
-            <div class="text-white">
-                <?= htmlspecialchars($_SESSION['nombre'] ?? 'Usuario') ?>
-            </div>
-        </div>
-    </nav>
-
-    <div class="container">
-        <div class="main-card">
-            <div class="icon-box">📦</div>
-            <h2 class="title-box">Añadir una nueva garantía</h2>
-
-            <?php if ($mensaje !== ''): ?>
-                <div class="alert alert-<?= htmlspecialchars($tipo_alerta) ?> text-center">
-                    <?= htmlspecialchars($mensaje) ?>
-                </div>
-            <?php endif; ?>
-
-            <form method="POST" enctype="multipart/form-data">
-                <div class="mb-3">
-                    <label for="nombre_producto" class="form-label">Nombre del producto *</label>
-                    <input type="text" class="form-control" id="nombre_producto" name="nombre_producto"
-                        value="<?= htmlspecialchars($nombre_producto) ?>" required>
-                </div>
-
-                <div class="mb-3">
-                    <label for="tienda" class="form-label">Tienda</label>
-                    <input type="text" class="form-control" id="tienda" name="tienda"
-                        value="<?= htmlspecialchars($tienda) ?>">
-                </div>
-
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label for="fecha_compra" class="form-label">Fecha de compra *</label>
-                        <input type="date" class="form-control" id="fecha_compra" name="fecha_compra"
-                            value="<?= htmlspecialchars($fecha_compra) ?>">
-                    </div>
-
-                    <div class="col-md-6 mb-3">
-                        <label for="fecha_vencimiento" class="form-label">Fecha de vencimiento *</label>
-                        <input type="date" class="form-control" id="fecha_vencimiento" name="fecha_vencimiento"
-                            value="<?= htmlspecialchars($fecha_vencimiento) ?>" required>
-                    </div>
-                </div>
-
-                <div class="mb-3">
-                    <label for="archivo_ticket" class="form-label">Subir ticket</label>
-                    <input type="file" class="form-control" id="archivo_ticket" name="archivo_ticket"
-                        accept=".jpg,.jpeg,.png,.webp">
-                </div>
-
-                <div class="mb-4">
-                    <label for="comentarios" class="form-label">Comentarios</label>
-                    <textarea class="form-control" id="comentarios" name="comentarios"
-                        rows="6"><?= htmlspecialchars($comentarios) ?></textarea>
-                </div>
-
-                <button type="submit" class="btn btn-save text-white w-100">Añadir producto</button>
-            </form>
+<nav class="topbar d-flex align-items-center">
+    <div class="container d-flex justify-content-between align-items-center">
+        <a href="index.php" class="brand">TicKeep</a>
+        <div class="text-white">
+            <?= htmlspecialchars($_SESSION['nombre'] ?? 'Usuario') ?>
         </div>
     </div>
+</nav>
 
-    <footer>
-        © 2025 TicKeep. Todos los derechos reservados.<br>
-        Tu tranquilidad, garantizada.
-    </footer>
+<div class="container">
+    <div class="main-card">
+        <div class="icon-box">📦</div>
+        <h2 class="title-box">Añadir una nueva garantía</h2>
+
+        <?php if ($mensaje !== ''): ?>
+            <div class="alert alert-<?= htmlspecialchars($tipo_alerta) ?> text-center">
+                <?= htmlspecialchars($mensaje) ?>
+            </div>
+        <?php endif; ?>
+
+        <form method="POST" enctype="multipart/form-data">
+            <div class="mb-3">
+                <label for="nombre_producto" class="form-label">Nombre del producto *</label>
+                <input type="text" class="form-control" id="nombre_producto" name="nombre_producto"
+                    value="<?= htmlspecialchars($nombre_producto) ?>" required>
+            </div>
+
+            <div class="mb-3">
+                <label for="tienda" class="form-label">Tienda</label>
+                <input type="text" class="form-control" id="tienda" name="tienda"
+                    value="<?= htmlspecialchars($tienda) ?>">
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="fecha_compra" class="form-label">Fecha de compra *</label>
+                    <input type="date" class="form-control" id="fecha_compra" name="fecha_compra"
+                        value="<?= htmlspecialchars($fecha_compra) ?>">
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label for="fecha_vencimiento" class="form-label">Fecha de vencimiento *</label>
+                    <input type="date" class="form-control" id="fecha_vencimiento" name="fecha_vencimiento"
+                        value="<?= htmlspecialchars($fecha_vencimiento) ?>" required>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label for="archivo_ticket" class="form-label">Subir ticket</label>
+                <input type="file" class="form-control" id="archivo_ticket" name="archivo_ticket"
+                    accept=".jpg,.jpeg,.png,.webp">
+            </div>
+
+            <div class="mb-4">
+                <label for="comentarios" class="form-label">Comentarios</label>
+                <textarea class="form-control" id="comentarios" name="comentarios"
+                    rows="4"><?= htmlspecialchars($comentarios) ?></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-save text-white w-100">Añadir producto</button>
+        </form>
+
+        <?php if ($debug_ocr !== ''): ?>
+            <hr>
+            <h5 class="mt-4">Resultado OCR / Debug</h5>
+            <pre style="white-space: pre-wrap; background:#f8f9fa; padding:15px; border-radius:8px;"><?= htmlspecialchars($debug_ocr) ?></pre>
+        <?php endif; ?>
+    </div>
+</div>
+
+<footer>
+    © 2025 TicKeep. Todos los derechos reservados.<br>
+    Tu tranquilidad, garantizada.
+</footer>
 
 </body>
-
 </html>
