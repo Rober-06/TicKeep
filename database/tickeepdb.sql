@@ -2,8 +2,8 @@
 -- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
--- Servidor: 127.0.0.1:3307
--- Tiempo de generación: 19-03-2026 a las 14:04:47
+-- Servidor: 127.0.0.1
+-- Tiempo de generación: 23-04-2026 a las 21:17:57
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -37,6 +37,7 @@ CREATE TABLE `garantias` (
   `fecha_compra` date NOT NULL,
   `fecha_vencimiento` date NOT NULL,
   `archivo_ticket` varchar(255) DEFAULT NULL,
+  `foto_producto` varchar(255) DEFAULT NULL,
   `comentarios` text DEFAULT NULL,
   `estado` enum('Vigente','Expira pronto','Caducada') DEFAULT 'Vigente'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -44,6 +45,11 @@ CREATE TABLE `garantias` (
 --
 -- Volcado de datos para la tabla `garantias`
 --
+
+INSERT INTO `garantias` (`id_garantia`, `id_usuario`, `nombre_producto`, `tienda`, `fecha_compra`, `fecha_vencimiento`, `archivo_ticket`, `foto_producto`, `comentarios`, `estado`) VALUES
+(2, 2, 'Auriculares', 'Mediamarkt', '2000-12-12', '2026-04-24', NULL, NULL, NULL, 'Expira pronto'),
+(4, 2, 'CAFE', 'ame CAFE TEATRE', '1200-12-12', '2029-10-10', NULL, NULL, 'Tienda detectada: ame CAFE TEATRE | Producto detectado: ch As', 'Vigente'),
+(5, 2, 'a', 'CAFE TEATRE', '2012-09-07', '2027-12-12', 'uploads/tickets/ticket_1776970536_2f2df449.jpg', NULL, NULL, 'Vigente');
 
 -- --------------------------------------------------------
 
@@ -59,6 +65,13 @@ CREATE TABLE `opciones_configuracion` (
   `notificaciones_email` tinyint(1) DEFAULT 1,
   `aviso_vencimiento` tinyint(1) DEFAULT 1
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Volcado de datos para la tabla `opciones_configuracion`
+--
+
+INSERT INTO `opciones_configuracion` (`id_usuario`, `foto_perfil`, `idioma`, `tema`, `notificaciones_email`, `aviso_vencimiento`) VALUES
+(2, 'default_avatar.png', 'es', 'claro', 1, 1);
 
 -- --------------------------------------------------------
 
@@ -77,6 +90,9 @@ CREATE TABLE `usuarios` (
 --
 -- Volcado de datos para la tabla `usuarios`
 --
+
+INSERT INTO `usuarios` (`id_usuario`, `nombre`, `contrasena`, `email`, `fecha_registro`) VALUES
+(2, 'a', '$2y$10$8Kd0A2DjZlCSEXf5Q2x2s.DgshZkWUMjXB1D0VAq1kMWZHE2lTNua', 'a@a', '2026-04-23 16:52:19');
 
 --
 -- Índices para tablas volcadas
@@ -110,13 +126,13 @@ ALTER TABLE `usuarios`
 -- AUTO_INCREMENT de la tabla `garantias`
 --
 ALTER TABLE `garantias`
-  MODIFY `id_garantia` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id_garantia` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT de la tabla `usuarios`
 --
 ALTER TABLE `usuarios`
-  MODIFY `id_usuario` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id_usuario` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- Restricciones para tablas volcadas
