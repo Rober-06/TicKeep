@@ -10,7 +10,7 @@ function limpiarJsonGemini(string $texto): string
 
 function procesarTicketGemini(string $rutaImagen): array
 {
-    $apiKey = "AIzaSyDZuST1Q-ujq5dUFXNyvdQT9DMxqknL7gM";
+    $apiKey = "-PONER AQUI ";
 
     if (!file_exists($rutaImagen)) {
         return [
