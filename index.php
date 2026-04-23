@@ -9,6 +9,10 @@ if (!isset($_SESSION['id_usuario'])) {
 
 $id_usuario = $_SESSION['id_usuario'];
 
+// Recoger filtros
+$busqueda = trim($_GET['busqueda'] ?? '');
+$filtro = trim($_GET['filtro'] ?? 'Todo');
+
 // Obtener datos del usuario y sus garantías
 try {
     $queryUser = "SELECT u.nombre, c.foto_perfil FROM usuarios u 
@@ -18,10 +22,31 @@ try {
     $stmtUser->execute([':id' => $id_usuario]);
     $userData = $stmtUser->fetch(PDO::FETCH_ASSOC);
 
-    $queryGarantias = "SELECT * FROM garantias WHERE id_usuario = :id ORDER BY fecha_compra DESC";
-    $stmtGarantias = $pdo->prepare($queryGarantias);
-    $stmtGarantias->execute([':id' => $id_usuario]);
+    // Consulta base
+    $sql = "SELECT * FROM garantias WHERE id_usuario = :id";
+    $params = [':id' => $id_usuario];
+
+    // Filtro por búsqueda
+    if ($busqueda !== '') {
+        $sql .= " AND (nombre_producto LIKE :busqueda OR tienda LIKE :busqueda)";
+        $params[':busqueda'] = '%' . $busqueda . '%';
+    }
+
+    // Filtro por estado
+    if ($filtro === 'Vigente') {
+        $sql .= " AND estado = :estado_vigente";
+        $params[':estado_vigente'] = 'Vigente';
+    } elseif ($filtro === 'Proximo') {
+        $sql .= " AND estado = :estado_proximo";
+        $params[':estado_proximo'] = 'Expira pronto';
+    }
+
+    $sql .= " ORDER BY fecha_compra DESC";
+
+    $stmtGarantias = $pdo->prepare($sql);
+    $stmtGarantias->execute($params);
     $garantias = $stmtGarantias->fetchAll(PDO::FETCH_ASSOC);
+
 } catch (PDOException $e) {
     die("Error: " . $e->getMessage());
 }
@@ -61,21 +86,39 @@ $fotoPerfil = !empty($userData['foto_perfil']) ? $userData['foto_perfil'] : 'def
             </div>
         </section>
 
-        <section class="search-input-wrapper">
-            <input type="text" class="search-input" placeholder="Buscar por producto o tienda...">
-        </section>
+        <form method="GET">
+            <section class="search-input-wrapper">
+                <input
+                    type="text"
+                    name="busqueda"
+                    class="search-input"
+                    placeholder="Buscar por producto o tienda..."
+                    value="<?= htmlspecialchars($busqueda); ?>">
+            </section>
 
-        <section class="filter-pills">
-            <button class="filter-pill active">Todo</button>
-            <button class="filter-pill">Vigente</button>
-            <button class="filter-pill">Próximo a vencer</button>
-        </section>
+            <section class="filter-pills">
+                <button type="submit" name="filtro" value="Todo"
+                    class="filter-pill <?= ($filtro === 'Todo') ? 'active' : '' ?>">
+                    Todo
+                </button>
+
+                <button type="submit" name="filtro" value="Vigente"
+                    class="filter-pill <?= ($filtro === 'Vigente') ? 'active' : '' ?>">
+                    Vigente
+                </button>
+
+                <button type="submit" name="filtro" value="Proximo"
+                    class="filter-pill <?= ($filtro === 'Proximo') ? 'active' : '' ?>">
+                    Próximo a vencer
+                </button>
+            </section>
+        </form>
 
         <section class="mt-4">
             <?php if (count($garantias) > 0): ?>
                 <?php foreach ($garantias as $g): ?>
                     <div class="tk-ticket-card bg-white shadow-sm">
-                        <img src="uploads/<?= !empty($g['archivo_ticket']) ? $g['archivo_ticket'] : 'default.png'; ?>"
+                        <img src="uploads/<?= !empty($g['archivo_ticket']) ? htmlspecialchars($g['archivo_ticket']) : 'default.png'; ?>"
                             class="ticket-thumb" alt="Producto">
 
                         <div class="ticket-info">
@@ -84,12 +127,14 @@ $fotoPerfil = !empty($userData['foto_perfil']) ? $userData['foto_perfil'] : 'def
                                 <?php
                                 $status = $g['estado'] ?? 'Vigente';
                                 $badge = 'badge-vigente';
-                                if ($status == 'Expira pronto')
+                                if ($status == 'Expira pronto') {
                                     $badge = 'badge-expira-pronto';
-                                if ($status == 'Caducada')
+                                }
+                                if ($status == 'Caducada') {
                                     $badge = 'badge-caducada';
+                                }
                                 ?>
-                                <span class="status-badge <?= $badge ?>"><?= $status ?></span>
+                                <span class="status-badge <?= $badge ?>"><?= htmlspecialchars($status); ?></span>
                             </div>
                             <p class="mb-1">Comprado en: <span
                                     class="store-name fw-bold"><?= htmlspecialchars($g['tienda']); ?></span></p>
