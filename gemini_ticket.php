@@ -10,7 +10,7 @@ function limpiarJsonGemini(string $texto): string
 
 function procesarTicketGemini(string $rutaImagen): array
 {
-    $apiKey = "-";
+    $apiKey = "AIzaSyC_nzxk8pdHrQgO_iBlr8Jfu-Kmc7tI5IA";
 
     if (!file_exists($rutaImagen)) {
         return [
@@ -22,13 +22,31 @@ function procesarTicketGemini(string $rutaImagen): array
     $mime = mime_content_type($rutaImagen);
     $base64 = base64_encode(file_get_contents($rutaImagen));
 
+    $prompt = "
+Analiza este ticket de compra.
+
+Devuelve SOLO un JSON válido, sin markdown, con estas claves exactas:
+{
+  \"nombre_producto\": \"\",
+  \"tienda\": \"\",
+  \"fecha_compra\": \"\"
+}
+
+Reglas:
+- fecha_compra debe estar en formato YYYY-MM-DD.
+- tienda debe ser el comercio principal.
+- nombre_producto debe ser el producto comprado más reconocible del ticket.
+- Si el ticket es de ropa, devuelve el artículo principal, por ejemplo: Pantalón, Camiseta, Chaqueta, Zapatillas.
+- Si hay varios productos, elige el primero o el más relevante.
+- No dejes nombre_producto vacío salvo que sea imposible leerlo.
+- No añadas explicaciones.
+";
+
     $data = [
         "contents" => [
             [
                 "parts" => [
-                    [
-                        "text" => "Analiza este ticket de compra y devuelve únicamente un objeto JSON puro con estas claves exactas: nombre_producto, tienda, fecha_compra. La fecha debe ir en formato YYYY-MM-DD. nombre_producto debe ser el artículo principal o el producto más probable sobre el que un usuario querría guardar una garantía, por ejemplo un móvil, auriculares, monitor, electrodoméstico, consola o accesorio tecnológico. Si hay varios productos, devuelve el más relevante. Si no puedes identificar ninguno con una confianza razonable, devuelve cadena vacía. No uses markdown, no uses ```json, no añadas explicaciones."
-                    ],
+                    ["text" => $prompt],
                     [
                         "inline_data" => [
                             "mime_type" => $mime,
@@ -40,7 +58,7 @@ function procesarTicketGemini(string $rutaImagen): array
         ],
         "generationConfig" => [
             "temperature" => 0.1,
-            "maxOutputTokens" => 800
+            "maxOutputTokens" => 1000
         ]
     ];
 
@@ -49,9 +67,7 @@ function procesarTicketGemini(string $rutaImagen): array
     $ch = curl_init($url);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, [
-        "Content-Type: application/json"
-    ]);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, ["Content-Type: application/json"]);
     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
 
     $response = curl_exec($ch);
@@ -71,28 +87,18 @@ function procesarTicketGemini(string $rutaImagen): array
     if ($httpCode !== 200) {
         return [
             'ok' => false,
-            'error' => 'Error HTTP ' . $httpCode,
-            'debug' => $respuestaArray
+            'error' => 'Error HTTP ' . $httpCode
         ];
     }
 
-    if (!isset($respuestaArray['candidates'][0]['content']['parts'][0]['text'])) {
-        return [
-            'ok' => false,
-            'error' => 'Gemini no ha devuelto texto válido.',
-            'debug' => $respuestaArray
-        ];
-    }
-
-    $texto = $respuestaArray['candidates'][0]['content']['parts'][0]['text'];
+    $texto = $respuestaArray['candidates'][0]['content']['parts'][0]['text'] ?? '';
     $jsonLimpio = limpiarJsonGemini($texto);
     $datos = json_decode($jsonLimpio, true);
 
     if (!is_array($datos)) {
         return [
             'ok' => false,
-            'error' => 'No se pudo interpretar el JSON devuelto por Gemini.',
-            'raw' => $texto
+            'error' => 'No se pudo interpretar el JSON devuelto por Gemini.'
         ];
     }
 

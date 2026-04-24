@@ -77,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['nuevo_comentario'])) 
 // Cargar garantía
 try {
     $sql = "SELECT id_garantia, id_usuario, nombre_producto, tienda, fecha_compra,
-                   fecha_vencimiento, archivo_ticket, comentarios, estado
+                   fecha_vencimiento, archivo_ticket, foto_producto,  comentarios, estado
             FROM garantias
             WHERE id_garantia = :id_garantia
               AND id_usuario = :id_usuario";
@@ -160,8 +160,17 @@ if (!empty($garantia['archivo_ticket'])) {
             <div class="row g-4 align-items-start">
                 <div class="col-md-auto">
                     <?php if ($mostrarImagen): ?>
-                        <img src="<?= htmlspecialchars($garantia['archivo_ticket']) ?>" alt="Ticket o imagen del producto"
-                            class="product-image">
+                      <?php
+$imagenDetalle = 'uploads/default.png';
+
+if (!empty($garantia['foto_producto'])) {
+    $imagenDetalle = $garantia['foto_producto'];
+} elseif (!empty($garantia['archivo_ticket'])) {
+    $imagenDetalle = $garantia['archivo_ticket'];
+}
+?>
+
+<img src="<?= htmlspecialchars($imagenDetalle) ?>" alt="Imagen del producto" class="product-image">
                     <?php else: ?>
                         <div class="product-image d-flex align-items-center justify-content-center">
                             📦
