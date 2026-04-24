@@ -64,7 +64,9 @@ $garantiasJson = json_encode($garantiasCalendario, JSON_UNESCAPED_UNICODE);
             <a href="index.php" class="tk-logo">TicKeep</a>
             <div class="d-flex align-items-center gap-3">
                 <span class="text-white d-none d-sm-block fw-500"><?= htmlspecialchars($userData['nombre']); ?></span>
-                <img src="assets/img/<?= htmlspecialchars($fotoPerfil); ?>" class="avatar-img" alt="Perfil">
+               <a href="configuracion.php">
+                    <img src="assets/img/<?= htmlspecialchars($fotoPerfil); ?>" class="avatar-img" alt="Perfil">
+                </a>
                 <a href="logout.php" class="tk-btn-logout" title="Cerrar sesión">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
