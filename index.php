@@ -46,6 +46,7 @@ $garantiasJson = json_encode($garantiasCalendario, JSON_UNESCAPED_UNICODE);
 ?>
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -57,6 +58,7 @@ $garantiasJson = json_encode($garantiasCalendario, JSON_UNESCAPED_UNICODE);
     <link rel="stylesheet" href="assets/css/index.css">
     <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet">
 </head>
+
 <body>
 
     <header class="tk-header">
@@ -64,12 +66,12 @@ $garantiasJson = json_encode($garantiasCalendario, JSON_UNESCAPED_UNICODE);
             <a href="index.php" class="tk-logo">TicKeep</a>
             <div class="d-flex align-items-center gap-3">
                 <span class="text-white d-none d-sm-block fw-500"><?= htmlspecialchars($userData['nombre']); ?></span>
-               <a href="configuracion.php">
+                <a href="configuracion.php">
                     <img src="assets/img/<?= htmlspecialchars($fotoPerfil); ?>" class="avatar-img" alt="Perfil">
                 </a>
                 <a href="logout.php" class="tk-btn-logout" title="Cerrar sesión">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                     </svg>
                     <span class="d-none d-md-inline">Salir</span>
                 </a>
@@ -85,12 +87,42 @@ $garantiasJson = json_encode($garantiasCalendario, JSON_UNESCAPED_UNICODE);
                 <p class="text-muted small mb-0"><?= count($garantias) ?> garantía<?= count($garantias) !== 1 ? 's' : '' ?> registrada<?= count($garantias) !== 1 ? 's' : '' ?></p>
             </div>
             <div class="d-flex gap-2 flex-wrap">
-                <button class="tk-btn-export d-flex align-items-center gap-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                    </svg>
-                    Exportar
-                </button>
+                <div class="dropdown">
+                    <div class="dropdown">
+                        <button class="tk-btn-export d-flex align-items-center gap-1 dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                            Exportar
+                        </button>
+
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a class="dropdown-item" href="exportar_garantias_pdf.php">
+                                    Exportar a PDF
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="exportar_garantias_excel.php">
+                                    Exportar a Excel
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a class="dropdown-item" href="exportar_garantias_pdf.php">
+                                Exportar a PDF
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="exportar_garantias_excel.php">
+                                Exportar a Excel
+                            </a>
+                        </li>
+                    </ul>
+                </div>
                 <a href="nueva-garantia.php" class="tk-btn-primary text-decoration-none d-flex align-items-center gap-1">
                     <span>+</span> Nueva garantía
                 </a>
@@ -101,7 +133,7 @@ $garantiasJson = json_encode($garantiasCalendario, JSON_UNESCAPED_UNICODE);
             <li class="nav-item" role="presentation">
                 <button class="tk-view-tab active" id="list-tab" data-bs-toggle="tab" data-bs-target="#tab-lista" type="button" role="tab">
                     <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
                     </svg>
                     Lista
                 </button>
@@ -109,10 +141,10 @@ $garantiasJson = json_encode($garantiasCalendario, JSON_UNESCAPED_UNICODE);
             <li class="nav-item" role="presentation">
                 <button class="tk-view-tab" id="cal-tab" data-bs-toggle="tab" data-bs-target="#tab-calendario" type="button" role="tab">
                     <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                        <line x1="16" y1="2" x2="16" y2="6"/>
-                        <line x1="8" y1="2" x2="8" y2="6"/>
-                        <line x1="3" y1="10" x2="21" y2="10"/>
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                        <line x1="16" y1="2" x2="16" y2="6" />
+                        <line x1="8" y1="2" x2="8" y2="6" />
+                        <line x1="3" y1="10" x2="21" y2="10" />
                     </svg>
                     Calendario
                 </button>
@@ -124,7 +156,8 @@ $garantiasJson = json_encode($garantiasCalendario, JSON_UNESCAPED_UNICODE);
             <div class="tab-pane fade show active" id="tab-lista" role="tabpanel">
                 <section class="search-input-wrapper mb-3">
                     <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+                        <circle cx="11" cy="11" r="8" />
+                        <path d="M21 21l-4.35-4.35" />
                     </svg>
                     <input type="text" id="searchInput" class="search-input" placeholder="Buscar por producto o tienda...">
                 </section>
@@ -153,9 +186,9 @@ $garantiasJson = json_encode($garantiasCalendario, JSON_UNESCAPED_UNICODE);
                             }
                             ?>
                             <div class="tk-ticket-card"
-                                 data-estado="<?= htmlspecialchars($status) ?>"
-                                 data-nombre="<?= strtolower(htmlspecialchars($g['nombre_producto'])) ?>"
-                                 data-tienda="<?= strtolower(htmlspecialchars($g['tienda'])) ?>">
+                                data-estado="<?= htmlspecialchars($status) ?>"
+                                data-nombre="<?= strtolower(htmlspecialchars($g['nombre_producto'])) ?>"
+                                data-tienda="<?= strtolower(htmlspecialchars($g['tienda'])) ?>">
                                 <img src="<?= htmlspecialchars($imagenMostrar) ?>" class="ticket-thumb" alt="Producto">
                                 <div class="ticket-info">
                                     <div class="ticket-header">
@@ -203,54 +236,63 @@ $garantiasJson = json_encode($garantiasCalendario, JSON_UNESCAPED_UNICODE);
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
     <script>
-    const searchInput = document.getElementById('searchInput');
-    const filterBtns  = document.querySelectorAll('.filter-pill');
-    const cards       = document.querySelectorAll('.tk-ticket-card');
-    const noResults   = document.getElementById('no-results');
-    let activeFilter  = 'Todo';
+        const searchInput = document.getElementById('searchInput');
+        const filterBtns = document.querySelectorAll('.filter-pill');
+        const cards = document.querySelectorAll('.tk-ticket-card');
+        const noResults = document.getElementById('no-results');
+        let activeFilter = 'Todo';
 
-    function applyFilters() {
-        const q = searchInput.value.toLowerCase().trim();
-        let visible = 0;
-        cards.forEach(card => {
-            const matchQ = !q || card.dataset.nombre.includes(q) || card.dataset.tienda.includes(q);
-            const matchF = activeFilter === 'Todo' || card.dataset.estado === activeFilter;
-            card.style.display = (matchQ && matchF) ? '' : 'none';
-            if (matchQ && matchF) visible++;
-        });
-        noResults.classList.toggle('d-none', visible > 0);
-    }
+        function applyFilters() {
+            const q = searchInput.value.toLowerCase().trim();
+            let visible = 0;
+            cards.forEach(card => {
+                const matchQ = !q || card.dataset.nombre.includes(q) || card.dataset.tienda.includes(q);
+                const matchF = activeFilter === 'Todo' || card.dataset.estado === activeFilter;
+                card.style.display = (matchQ && matchF) ? '' : 'none';
+                if (matchQ && matchF) visible++;
+            });
+            noResults.classList.toggle('d-none', visible > 0);
+        }
 
-    searchInput.addEventListener('input', applyFilters);
-    filterBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            filterBtns.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            activeFilter = btn.dataset.filter;
-            applyFilters();
+        searchInput.addEventListener('input', applyFilters);
+        filterBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                filterBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                activeFilter = btn.dataset.filter;
+                applyFilters();
+            });
         });
-    });
 
-    document.getElementById('cal-tab').addEventListener('shown.bs.tab', () => {
-        if (window._calInit) return;
-        window._calInit = true;
-        const cal = new FullCalendar.Calendar(document.getElementById('tk-calendar'), {
-            initialView: 'dayGridMonth',
-            locale: 'es',
-            height: 'auto',
-            headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,listMonth' },
-            buttonText: { today: 'Hoy', month: 'Mes', list: 'Lista' },
-            events: <?= $garantiasJson ?>,
-            eventClick(info) {
-                info.jsEvent.preventDefault();
-                if (info.event.url) window.location.href = info.event.url;
-            },
-            eventDidMount(info) {
-                info.el.title = info.event.title + ' — ' + (info.event.extendedProps.tienda || '') + ' (' + (info.event.extendedProps.estado || '') + ')';
-            }
+        document.getElementById('cal-tab').addEventListener('shown.bs.tab', () => {
+            if (window._calInit) return;
+            window._calInit = true;
+            const cal = new FullCalendar.Calendar(document.getElementById('tk-calendar'), {
+                initialView: 'dayGridMonth',
+                locale: 'es',
+                height: 'auto',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,listMonth'
+                },
+                buttonText: {
+                    today: 'Hoy',
+                    month: 'Mes',
+                    list: 'Lista'
+                },
+                events: <?= $garantiasJson ?>,
+                eventClick(info) {
+                    info.jsEvent.preventDefault();
+                    if (info.event.url) window.location.href = info.event.url;
+                },
+                eventDidMount(info) {
+                    info.el.title = info.event.title + ' — ' + (info.event.extendedProps.tienda || '') + ' (' + (info.event.extendedProps.estado || '') + ')';
+                }
+            });
+            cal.render();
         });
-        cal.render();
-    });
     </script>
 </body>
+
 </html>
