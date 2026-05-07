@@ -2,8 +2,8 @@
 -- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
--- Servidor: 127.0.0.1
--- Tiempo de generación: 23-04-2026 a las 21:17:57
+-- Servidor: 127.0.0.1:3307
+-- Tiempo de generación: 30-04-2026 a las 14:41:15
 -- Versión del servidor: 10.4.32-MariaDB
 -- Versión de PHP: 8.2.12
 
@@ -49,7 +49,36 @@ CREATE TABLE `garantias` (
 INSERT INTO `garantias` (`id_garantia`, `id_usuario`, `nombre_producto`, `tienda`, `fecha_compra`, `fecha_vencimiento`, `archivo_ticket`, `foto_producto`, `comentarios`, `estado`) VALUES
 (2, 2, 'Auriculares', 'Mediamarkt', '2000-12-12', '2026-04-24', NULL, NULL, NULL, 'Expira pronto'),
 (4, 2, 'CAFE', 'ame CAFE TEATRE', '1200-12-12', '2029-10-10', NULL, NULL, 'Tienda detectada: ame CAFE TEATRE | Producto detectado: ch As', 'Vigente'),
-(5, 2, 'a', 'CAFE TEATRE', '2012-09-07', '2027-12-12', 'uploads/tickets/ticket_1776970536_2f2df449.jpg', NULL, NULL, 'Vigente');
+(5, 2, 'a', 'CAFE TEATRE', '2012-09-07', '2027-12-12', 'uploads/tickets/ticket_1776970536_2f2df449.jpg', NULL, NULL, 'Vigente'),
+(9, 4, 'a', 'a', '2026-04-23', '2026-05-07', NULL, NULL, NULL, 'Expira pronto'),
+(10, 4, 'a', 'a', '2026-04-11', '2026-05-08', NULL, NULL, NULL, 'Expira pronto'),
+(11, 4, 'a', 'a', '2026-04-23', '2026-05-07', NULL, NULL, NULL, 'Expira pronto'),
+(12, 4, 'a', 'a', '2026-04-17', '2026-04-29', NULL, NULL, NULL, 'Caducada');
+
+-- --------------------------------------------------------
+
+--
+-- Estructura de tabla para la tabla `notificaciones_enviadas`
+--
+
+CREATE TABLE `notificaciones_enviadas` (
+  `id_notificacion` int(11) NOT NULL,
+  `id_usuario` int(11) NOT NULL,
+  `id_garantia` int(11) DEFAULT NULL,
+  `tipo` varchar(50) NOT NULL,
+  `fecha_envio` datetime NOT NULL,
+  `periodo_clave` varchar(50) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Volcado de datos para la tabla `notificaciones_enviadas`
+--
+
+INSERT INTO `notificaciones_enviadas` (`id_notificacion`, `id_usuario`, `id_garantia`, `tipo`, `fecha_envio`, `periodo_clave`) VALUES
+(1, 4, 9, 'vencimiento', '2026-04-30 14:25:26', NULL),
+(2, 4, 11, 'vencimiento', '2026-04-30 14:25:28', NULL),
+(3, 4, 12, 'caducada', '2026-04-30 14:25:30', NULL),
+(4, 4, NULL, 'resumen_mensual', '2026-04-30 14:25:32', '2026-04');
 
 -- --------------------------------------------------------
 
@@ -63,15 +92,30 @@ CREATE TABLE `opciones_configuracion` (
   `idioma` varchar(5) DEFAULT 'es',
   `tema` enum('claro','oscuro') DEFAULT 'claro',
   `notificaciones_email` tinyint(1) DEFAULT 1,
-  `aviso_vencimiento` tinyint(1) DEFAULT 1
+  `aviso_vencimiento` tinyint(1) DEFAULT 1,
+  `notificaciones_app` tinyint(1) DEFAULT 1,
+  `dias_aviso` int(11) DEFAULT 30,
+  `frecuencia_recordatorio` varchar(20) DEFAULT 'una_vez',
+  `hora_recordatorio` varchar(5) DEFAULT '09:00',
+  `notificar_caducadas` tinyint(1) DEFAULT 0,
+  `resumen_mensual` tinyint(1) DEFAULT 0,
+  `color_acento` varchar(20) DEFAULT '#202bbf',
+  `formato_fecha` varchar(20) DEFAULT 'd/m/Y',
+  `animaciones_ui` tinyint(1) DEFAULT 1,
+  `orden_garantias` varchar(30) DEFAULT 'fecha_compra_desc',
+  `mostrar_dias_restantes` tinyint(1) DEFAULT 1,
+  `confirmar_eliminacion` tinyint(1) DEFAULT 1,
+  `modo_compacto` tinyint(1) DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Volcado de datos para la tabla `opciones_configuracion`
 --
 
-INSERT INTO `opciones_configuracion` (`id_usuario`, `foto_perfil`, `idioma`, `tema`, `notificaciones_email`, `aviso_vencimiento`) VALUES
-(2, 'default_avatar.png', 'es', 'claro', 1, 1);
+INSERT INTO `opciones_configuracion` (`id_usuario`, `foto_perfil`, `idioma`, `tema`, `notificaciones_email`, `aviso_vencimiento`, `notificaciones_app`, `dias_aviso`, `frecuencia_recordatorio`, `hora_recordatorio`, `notificar_caducadas`, `resumen_mensual`, `color_acento`, `formato_fecha`, `animaciones_ui`, `orden_garantias`, `mostrar_dias_restantes`, `confirmar_eliminacion`, `modo_compacto`) VALUES
+(2, 'default_avatar.png', 'es', 'claro', 1, 1, 1, 30, 'una_vez', '09:00', 0, 0, '#202bbf', 'd/m/Y', 1, 'fecha_compra_desc', 1, 1, 0),
+(3, 'perfil_3_1777545914.jpg', 'Españ', 'claro', 1, 1, 1, 30, 'una_vez', '09:00', 0, 0, '#202bbf', 'd/m/Y', 1, 'fecha_vencimiento_asc', 1, 0, 0),
+(4, 'perfil_4_1777550569.png', 'Españ', 'claro', 1, 1, 1, 7, 'una_vez', '14:36', 1, 1, '#202bbf', 'd/m/Y', 1, 'fecha_compra_desc', 1, 1, 0);
 
 -- --------------------------------------------------------
 
@@ -92,7 +136,9 @@ CREATE TABLE `usuarios` (
 --
 
 INSERT INTO `usuarios` (`id_usuario`, `nombre`, `contrasena`, `email`, `fecha_registro`) VALUES
-(2, 'a', '$2y$10$8Kd0A2DjZlCSEXf5Q2x2s.DgshZkWUMjXB1D0VAq1kMWZHE2lTNua', 'a@a', '2026-04-23 16:52:19');
+(2, 'a', '$2y$10$8Kd0A2DjZlCSEXf5Q2x2s.DgshZkWUMjXB1D0VAq1kMWZHE2lTNua', 'a@a', '2026-04-23 16:52:19'),
+(3, 'a', '$2y$10$y/NDcEb8ZhoTs64nEnPcKu1YKtOTp1ii.XAGOWr4QEd7L5vMP/0AS', 'a@a.com', '2026-04-30 10:28:38'),
+(4, 'RRoberto', '$2y$10$Orw75patc6WgP5l1DWCxZewbETkOOjMlw9dZQUggu828mLY.JqG2O', 'roberto.asencio.palacios@iesmaeserodrigo.es', '2026-04-30 12:02:34');
 
 --
 -- Índices para tablas volcadas
@@ -104,6 +150,16 @@ INSERT INTO `usuarios` (`id_usuario`, `nombre`, `contrasena`, `email`, `fecha_re
 ALTER TABLE `garantias`
   ADD PRIMARY KEY (`id_garantia`),
   ADD KEY `id_usuario` (`id_usuario`);
+
+--
+-- Indices de la tabla `notificaciones_enviadas`
+--
+ALTER TABLE `notificaciones_enviadas`
+  ADD PRIMARY KEY (`id_notificacion`),
+  ADD KEY `id_usuario` (`id_usuario`),
+  ADD KEY `id_garantia` (`id_garantia`),
+  ADD KEY `tipo` (`tipo`),
+  ADD KEY `periodo_clave` (`periodo_clave`);
 
 --
 -- Indices de la tabla `opciones_configuracion`
@@ -126,13 +182,19 @@ ALTER TABLE `usuarios`
 -- AUTO_INCREMENT de la tabla `garantias`
 --
 ALTER TABLE `garantias`
-  MODIFY `id_garantia` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id_garantia` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+
+--
+-- AUTO_INCREMENT de la tabla `notificaciones_enviadas`
+--
+ALTER TABLE `notificaciones_enviadas`
+  MODIFY `id_notificacion` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT de la tabla `usuarios`
 --
 ALTER TABLE `usuarios`
-  MODIFY `id_usuario` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id_usuario` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- Restricciones para tablas volcadas

@@ -2,6 +2,7 @@
 session_start();
 require 'config/bd.php';
 require 'gemini_ticket.php';
+require 'includes/preferencias_usuario.php';
 
 if (!isset($_SESSION['id_usuario'])) {
     header('Location: login.php');
@@ -167,12 +168,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 ?>
 
 <!DOCTYPE html>
-<html lang="es">
+<html lang="<?= $preferencias['idioma'] === 'Inglés' ? 'en' : 'es' ?>"
+      data-theme="<?= htmlspecialchars($preferencias['tema']) ?>"
+      data-animations="<?= (int)$preferencias['animaciones_ui'] ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nueva garantía - TicKeep</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="assets/css/preferencias.css">
     <style>
         body {
             background-color: #efefef;
