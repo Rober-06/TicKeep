@@ -1,6 +1,7 @@
 <?php
 session_start();
 require 'config/bd.php';
+require 'includes/preferencias_usuario.php';
 
 if (!isset($_SESSION['id_usuario'])) {
     header('Location: login.php');
@@ -66,7 +67,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['nuevo_comentario'])) 
 
             $mensaje = 'Comentario añadido correctamente.';
             $tipo_alerta = 'success';
-
         } catch (PDOException $e) {
             $mensaje = 'Error al guardar el comentario: ' . $e->getMessage();
             $tipo_alerta = 'danger';
@@ -77,7 +77,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['nuevo_comentario'])) 
 // Cargar garantía
 try {
     $sql = "SELECT id_garantia, id_usuario, nombre_producto, tienda, fecha_compra,
-                   fecha_vencimiento, archivo_ticket, comentarios, estado
+                   fecha_vencimiento, archivo_ticket, foto_producto,  comentarios, estado
             FROM garantias
             WHERE id_garantia = :id_garantia
               AND id_usuario = :id_usuario";
@@ -94,7 +94,6 @@ try {
         header('Location: mis_garantias.php');
         exit();
     }
-
 } catch (PDOException $e) {
     die("Error al cargar la garantía: " . $e->getMessage());
 }
@@ -116,7 +115,9 @@ if (!empty($garantia['archivo_ticket'])) {
 }
 ?>
 <!DOCTYPE html>
-<html lang="es">
+<html lang="<?= $preferencias['idioma'] === 'Inglés' ? 'en' : 'es' ?>"
+    data-theme="<?= htmlspecialchars($preferencias['tema']) ?>"
+    data-animations="<?= (int)$preferencias['animaciones_ui'] ?>">
 
 <head>
     <meta charset="UTF-8">
@@ -124,6 +125,7 @@ if (!empty($garantia['archivo_ticket'])) {
     <title>Ver artículo - TicKeep</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="assets/css/detalle.css">
+    <link rel="stylesheet" href="assets/css/preferencias.css">
 </head>
 
 <body>
@@ -137,7 +139,7 @@ if (!empty($garantia['archivo_ticket'])) {
                 </span>
                 <a href="logout.php" class="tk-btn-logout" title="Cerrar sesión">
                     <svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                     </svg>
                     <span class="d-none d-md-inline">Salir</span>
                 </a>
@@ -160,8 +162,17 @@ if (!empty($garantia['archivo_ticket'])) {
             <div class="row g-4 align-items-start">
                 <div class="col-md-auto">
                     <?php if ($mostrarImagen): ?>
-                        <img src="<?= htmlspecialchars($garantia['archivo_ticket']) ?>" alt="Ticket o imagen del producto"
-                            class="product-image">
+                        <?php
+                        $imagenDetalle = 'uploads/default.png';
+
+                        if (!empty($garantia['foto_producto'])) {
+                            $imagenDetalle = $garantia['foto_producto'];
+                        } elseif (!empty($garantia['archivo_ticket'])) {
+                            $imagenDetalle = $garantia['archivo_ticket'];
+                        }
+                        ?>
+
+                        <img src="<?= htmlspecialchars($imagenDetalle) ?>" alt="Imagen del producto" class="product-image">
                     <?php else: ?>
                         <div class="product-image d-flex align-items-center justify-content-center">
                             📦
@@ -220,9 +231,10 @@ if (!empty($garantia['archivo_ticket'])) {
                     Editar
                 </a>
 
-                <a href="eliminar_garantia.php?id=<?= (int) $garantia['id_garantia'] ?>" class="btn btn-danger btn-soft"
-                    onclick="return confirm('¿Seguro que quieres eliminar esta garantía?');">
-                    Borrar garantía
+                <a href="eliminar_garantia.php?id=<?= $garantia['id_garantia'] ?>"
+                    class="btn btn-danger"
+                    <?= !empty($preferencias['confirmar_eliminacion']) ? 'onclick="return confirm(\'¿Seguro que quieres borrar esta garantía?\')"' : '' ?>>
+                    Borrar
                 </a>
             </div>
         </div>
